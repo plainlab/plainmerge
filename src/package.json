@@ -1,0 +1,20 @@
+{
+  "name": "plainmerge",
+  "productName": "PlainMerge",
+  "version": "0.0.1",
+  "description": "Plain PDF Mail Merger",
+  "main": "./main.prod.js",
+  "author": {
+    "name": "PlainLabs",
+    "email": "labs@manhtai.com",
+    "url": "https://github.com/plainlabs"
+  },
+  "scripts": {
+    "electron-rebuild": "node -r ../.erb/scripts/BabelRegister.js ../.erb/scripts/ElectronRebuild.js",
+    "postinstall": "yarn electron-rebuild"
+  },
+  "license": "GPL-3.0-only",
+  "dependencies": {
+    "fabric": "^4.5.1"
+  }
+}
