@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
-import { Document, Page } from 'react-pdf/dist/esm/entry.webpack';
+import { Document, Page, pdfjs } from 'react-pdf/dist/esm/entry.webpack';
 import { ipcRenderer } from 'electron';
+// eslint-disable-next-line
+// @ts-ignore
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
 import { FabricJSCanvas, useFabricJSEditor } from '../fabric/Fabric';
+
+pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 const PdfAnnotate = () => {
   const [pdfFile, setPdfFile] = useState('');
@@ -26,17 +31,21 @@ const PdfAnnotate = () => {
   };
 
   const handleAddText = () => {
-    editor?.addText('Hi', { top: 200, left: 200 });
+    editor?.addText('Change me', { top: 200, left: 200 });
   };
 
-  const onDocumentLoadSuccess = (doc: { numPages: number }) => {
+  const handleDocumentLoadSuccess = (doc: { numPages: number }) => {
     setNumPages(doc.numPages);
     setLoaded(true);
   };
 
-  const onPageLoadSucccess = (doc: { width: number; height: number }) => {
+  const handlePageLoadSucccess = (doc: { width: number; height: number }) => {
     setPdfWidth(doc.width);
     setPdfHeight(doc.height);
+  };
+
+  const handleDocumentError = (e: any) => {
+    console.error(e);
   };
 
   return (
@@ -60,10 +69,16 @@ const PdfAnnotate = () => {
 
       <Document
         file={pdfFile}
-        onLoadSuccess={onDocumentLoadSuccess}
+        onLoadSuccess={handleDocumentLoadSuccess}
         className="relative flex items-center justify-center p-4"
+        options={{
+          cMapUrl: 'cmaps/',
+          cMapPacked: true,
+        }}
+        onLoadError={handleDocumentError}
+        onSourceError={handleDocumentError}
       >
-        <Page pageNumber={pageNumber} onLoadSuccess={onPageLoadSucccess} />
+        <Page pageNumber={pageNumber} onLoadSuccess={handlePageLoadSucccess} />
         <FabricJSCanvas
           className="absolute w-full h-full border border-blue-500"
           style={{ width: pdfWidth, height: pdfHeight }}
@@ -74,7 +89,11 @@ const PdfAnnotate = () => {
       {loaded && (
         <div className="flex items-center justify-between">
           {pageNumber > 1 ? (
-            <button type="button" onClick={() => setPageNumber(pageNumber - 1)}>
+            <button
+              type="button"
+              onClick={() => setPageNumber(pageNumber - 1)}
+              className="btn-link"
+            >
               &lt; Back
             </button>
           ) : (
@@ -84,7 +103,11 @@ const PdfAnnotate = () => {
             Page {pageNumber} of {numPages}
           </p>
           {pageNumber < numPages ? (
-            <button type="button" onClick={() => setPageNumber(pageNumber + 1)}>
+            <button
+              type="button"
+              onClick={() => setPageNumber(pageNumber + 1)}
+              className="btn-link"
+            >
               Next &gt;
             </button>
           ) : (

@@ -39,7 +39,7 @@ const Main = () => {
           <NavLink
             to={path}
             key={path}
-            className="flex items-center h-16 w-16 justify-center p-2 text-center border-l-2 border-transparent opacity-50"
+            className="flex items-center justify-center w-16 h-16 p-2 text-center border-l-2 border-transparent opacity-50"
             activeClassName="border-l-2 border-blue-600 opacity-100"
           >
             {icon}
@@ -48,7 +48,7 @@ const Main = () => {
       </nav>
 
       {/* Main content */}
-      <main className="flex flex-col flex-1 p-8 bg-gray-200">
+      <main className="flex flex-col flex-1 p-8 overflow-y-auto bg-gray-200">
         {allRoutes.map(({ path, name, Component }) => (
           <Route key={path} exact path={path}>
             <Component />

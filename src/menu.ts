@@ -153,7 +153,7 @@ export default class MenuBuilder {
       label: 'Help',
       submenu: [
         {
-          label: 'PlainLabs homepage',
+          label: 'PlainLabs home page',
           click() {
             shell.openExternal('https://plainlabs.github.io');
           },
