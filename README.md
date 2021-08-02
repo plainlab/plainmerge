@@ -1,6 +1,4 @@
-[![Test](https://github.com/plainlabs/plainmerge/actions/workflows/test.yml/badge.svg)](https://github.com/plainlabs/plainmerge/actions/workflows/test.yml) ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/plainlabs/plainmerge)
-
-# PlainMerge
+[![Test](https://github.com/plainlabs/plainmerge/actions/workflows/test.yml/badge.svg)](https://github.com/plainlabs/plainmerge/actions/workflows/test.yml)
 
 > A plain PDF mail merger
 
