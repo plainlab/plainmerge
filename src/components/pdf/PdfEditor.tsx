@@ -15,6 +15,7 @@ const PdfEditor = () => {
   const [pageNumber, setPageNumber] = useState(1);
   const [opening, setOpening] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [showCanvas, setShowCanvas] = useState(false);
   const [pdfWidth, setPdfWidth] = useState(0);
   const [pdfHeight, setPdfHeight] = useState(0);
 
@@ -42,6 +43,7 @@ const PdfEditor = () => {
   const handlePageLoadSucccess = (doc: { width: number; height: number }) => {
     setPdfWidth(doc.width);
     setPdfHeight(doc.height);
+    setShowCanvas(true);
   };
 
   const handleDocumentError = (e: any) => {
@@ -79,11 +81,14 @@ const PdfEditor = () => {
         onSourceError={handleDocumentError}
       >
         <Page pageNumber={pageNumber} onLoadSuccess={handlePageLoadSucccess} />
-        <FabricJSCanvas
-          className="absolute w-full h-full border border-gray-300"
-          style={{ width: pdfWidth, height: pdfHeight }}
-          onReady={onReady}
-        />
+
+        {showCanvas && (
+          <FabricJSCanvas
+            className="absolute w-full h-full border border-gray-300"
+            style={{ width: pdfWidth, height: pdfHeight }}
+            onReady={onReady}
+          />
+        )}
       </Document>
 
       {loaded && (
