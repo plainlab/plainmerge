@@ -1,4 +1,10 @@
-import React, { CSSProperties, useEffect, useRef } from 'react';
+import React, {
+  CSSProperties,
+  DragEventHandler,
+  RefObject,
+  useEffect,
+  useRef,
+} from 'react';
 import { fabric } from 'fabric';
 
 import { useFabricJSEditor } from './editor';
@@ -6,21 +12,28 @@ import { useFabricJSEditor } from './editor';
 export interface Props {
   className?: string;
   onReady?: (canvas: fabric.Canvas) => void;
+  onDrop?: DragEventHandler;
   style?: CSSProperties;
+  canvasRef: RefObject<HTMLCanvasElement>;
 }
 
-const FabricJSCanvas = ({ className, onReady, style }: Props) => {
-  const canvasEl = useRef(null);
-  const canvasElParent = useRef<HTMLDivElement>(null);
+const FabricJSCanvas = ({
+  className,
+  onReady,
+  onDrop,
+  style,
+  canvasRef,
+}: Props) => {
+  const parentRef = useRef<HTMLDivElement>(null);
 
   const setCurrentDimensions = (canvas: fabric.Canvas) => {
-    canvas.setHeight(canvasElParent.current?.clientHeight || 0);
-    canvas.setWidth(canvasElParent.current?.clientWidth || 0);
+    canvas.setHeight(parentRef?.current?.clientHeight || 0);
+    canvas.setWidth(parentRef?.current?.clientWidth || 0);
     canvas.renderAll();
   };
 
   useEffect(() => {
-    const canvas = new fabric.Canvas(canvasEl.current);
+    const canvas = new fabric.Canvas(canvasRef.current);
     const resizeCanvas = () => {
       setCurrentDimensions(canvas);
     };
@@ -39,8 +52,8 @@ const FabricJSCanvas = ({ className, onReady, style }: Props) => {
   }, []);
 
   return (
-    <div ref={canvasElParent} className={className} style={style}>
-      <canvas ref={canvasEl} />
+    <div ref={parentRef} className={className} style={style} onDrop={onDrop}>
+      <canvas ref={canvasRef} />
     </div>
   );
 };

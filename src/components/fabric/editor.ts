@@ -1,22 +1,23 @@
 import { useEffect, useState } from 'react';
 import { fabric } from 'fabric';
+import { ITextboxOptions } from 'fabric/fabric-impl';
 
-const STROKE = '#000000';
-
-const TEXT = {
+const TextOptions: ITextboxOptions = {
   type: 'text',
   left: 100,
   top: 100,
   fontSize: 16,
   fontFamily: 'Arial',
-  fill: STROKE,
+  fill: '#000000',
+  minWidth: 100,
+  editable: false,
 };
 
 export interface FabricJSEditor {
   canvas: fabric.Canvas;
   dump: () => any;
   load: (data: any) => void;
-  addText: (text: string, options: any) => void;
+  addText: (text: string, extraOptions?: ITextboxOptions) => void;
   deleteAll: () => void;
   deleteSelected: () => void;
 }
@@ -30,10 +31,10 @@ const buildEditor = (canvas: fabric.Canvas): FabricJSEditor => {
     load: (data) => {
       canvas.loadFromJSON(data, () => {});
     },
-    addText: (text: string, options: any = {}) => {
+    addText: (text: string, extraOptions?: ITextboxOptions) => {
       const object = new fabric.Textbox(text, {
-        ...options,
-        ...TEXT,
+        ...TextOptions,
+        ...extraOptions,
       });
       object.set({ text });
       canvas.add(object);
