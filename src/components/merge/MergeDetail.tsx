@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import PdfAnnotate from '../pdf/PdfAnnotate';
+import PdfEditor from '../pdf/PdfEditor';
 
 type ParamsType = {
   id: string;
@@ -9,7 +9,7 @@ type ParamsType = {
 const MergeDetail = () => {
   const params = useParams<ParamsType>();
   console.log(params.id);
-  return <PdfAnnotate />;
+  return <PdfEditor />;
 };
 
 export default MergeDetail;

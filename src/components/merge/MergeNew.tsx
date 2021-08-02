@@ -1,8 +1,8 @@
 import React from 'react';
-import PdfAnnotate from '../pdf/PdfAnnotate';
+import PdfEditor from '../pdf/PdfEditor';
 
 const MergeNew = () => {
-  return <PdfAnnotate />;
+  return <PdfEditor />;
 };
 
 export default MergeNew;

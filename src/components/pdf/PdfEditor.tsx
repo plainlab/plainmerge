@@ -8,7 +8,7 @@ import { FabricJSCanvas, useFabricJSEditor } from '../fabric/Fabric';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
-const PdfAnnotate = () => {
+const PdfEditor = () => {
   const [pdfFile, setPdfFile] = useState('');
   const { editor, onReady } = useFabricJSEditor();
   const [numPages, setNumPages] = useState(1);
@@ -80,7 +80,7 @@ const PdfAnnotate = () => {
       >
         <Page pageNumber={pageNumber} onLoadSuccess={handlePageLoadSucccess} />
         <FabricJSCanvas
-          className="absolute w-full h-full border border-blue-500"
+          className="absolute w-full h-full border border-gray-300"
           style={{ width: pdfWidth, height: pdfHeight }}
           onReady={onReady}
         />
@@ -119,4 +119,4 @@ const PdfAnnotate = () => {
   );
 };
 
-export default PdfAnnotate;
+export default PdfEditor;

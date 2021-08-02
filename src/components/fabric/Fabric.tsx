@@ -13,22 +13,23 @@ const FabricJSCanvas = ({ className, onReady, style }: Props) => {
   const canvasEl = useRef(null);
   const canvasElParent = useRef<HTMLDivElement>(null);
 
+  const setCurrentDimensions = (canvas: fabric.Canvas) => {
+    canvas.setHeight(canvasElParent.current?.clientHeight || 0);
+    canvas.setWidth(canvasElParent.current?.clientWidth || 0);
+    canvas.renderAll();
+  };
+
   useEffect(() => {
     const canvas = new fabric.Canvas(canvasEl.current);
-    const setCurrentDimensions = () => {
-      canvas.setHeight(canvasElParent.current?.clientHeight || 0);
-      canvas.setWidth(canvasElParent.current?.clientWidth || 0);
-      canvas.renderAll();
-    };
     const resizeCanvas = () => {
-      setCurrentDimensions();
+      setCurrentDimensions(canvas);
     };
-    setCurrentDimensions();
 
     window.addEventListener('resize', resizeCanvas, false);
 
     if (onReady) {
       onReady(canvas);
+      setCurrentDimensions(canvas);
     }
 
     return () => {
