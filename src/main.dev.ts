@@ -193,20 +193,26 @@ interface Canvas {
   objects: CanvasObject[];
 }
 
+interface RenderPdf {
+  pdfFile: string;
+  pageNumber: number;
+  canvasData: Canvas;
+}
+
 ipcMain.handle(
   'render-pdf',
-  async (_event, pdfFile: string, canvas: Canvas) => {
+  async (_event, { pdfFile, pageNumber, canvasData }: RenderPdf) => {
     const pdfBuff = await readFile(pdfFile);
     const pdfDoc = await PDFDocument.load(pdfBuff);
 
     const pages = pdfDoc.getPages();
-    const firstPage = pages[0];
+    const page = pages[pageNumber];
 
-    const { height } = firstPage.getSize();
+    const { height } = page.getSize();
 
-    canvas.objects.forEach((obj: CanvasObject) => {
+    canvasData.objects.forEach((obj: CanvasObject) => {
       if (obj.type === 'text') {
-        firstPage.drawText(obj.text, {
+        page.drawText(obj.text, {
           x: obj.left,
           y: height - obj.top,
           size: obj.fontSize,
@@ -220,7 +226,11 @@ ipcMain.handle(
 
     if (!file || !file.filePath) return;
 
-    const pdfBytes = await pdfDoc.save();
+    const newDoc = await PDFDocument.create();
+    const [newPage] = await newDoc.copyPages(pdfDoc, [pageNumber]);
+    newDoc.addPage(newPage);
+
+    const pdfBytes = await newDoc.save();
     await writeFile(file.filePath, pdfBytes);
   }
 );

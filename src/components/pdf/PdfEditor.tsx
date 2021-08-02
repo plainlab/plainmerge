@@ -25,10 +25,18 @@ const PdfEditor = () => {
     const path = await ipcRenderer.invoke('open-file', filters, 'path');
     setPdfFile(path);
     setOpening(false);
+
+    // Reset nav & canvas
+    setLoaded(false);
+    setShowCanvas(false);
   };
 
   const handleSave = async () => {
-    ipcRenderer.invoke('render-pdf', pdfFile, editor?.canvas.toJSON());
+    ipcRenderer.invoke('render-pdf', {
+      pdfFile,
+      pageNumber,
+      canvasData: editor?.dump(),
+    });
   };
 
   const handleAddText = () => {
@@ -37,6 +45,7 @@ const PdfEditor = () => {
 
   const handleDocumentLoadSuccess = (doc: { numPages: number }) => {
     setNumPages(doc.numPages);
+    setPageNumber(1);
     setLoaded(true);
   };
 

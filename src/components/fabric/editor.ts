@@ -14,6 +14,8 @@ const TEXT = {
 
 export interface FabricJSEditor {
   canvas: fabric.Canvas;
+  dump: () => any;
+  load: (data: any) => void;
   addText: (text: string, options: any) => void;
   deleteAll: () => void;
   deleteSelected: () => void;
@@ -22,6 +24,12 @@ export interface FabricJSEditor {
 const buildEditor = (canvas: fabric.Canvas): FabricJSEditor => {
   return {
     canvas,
+    dump: () => {
+      return canvas.toJSON();
+    },
+    load: (data) => {
+      canvas.loadFromJSON(data, () => {});
+    },
     addText: (text: string, options: any = {}) => {
       const object = new fabric.Textbox(text, {
         ...options,
