@@ -1,15 +1,21 @@
 import { useEffect, useState } from 'react';
 import { fabric } from 'fabric';
-import { ITextboxOptions } from 'fabric/fabric-impl';
+import { ITextboxOptions, Textbox } from 'fabric/fabric-impl';
 
 const TextOptions: ITextboxOptions = {
   type: 'text',
   left: 100,
   top: 100,
   fontSize: 16,
-  fontFamily: 'Arial',
+  fontFamily: 'Helvetica',
   fill: '#000000',
-  minWidth: 100,
+  width: 150,
+  lockRotation: true,
+  lockSkewingX: true,
+  lockSkewingY: true,
+  lockScalingX: true,
+  lockScalingY: true,
+  hasControls: false,
   editable: false,
 };
 
@@ -18,6 +24,7 @@ export interface FabricJSEditor {
   dump: () => any;
   load: (data: any) => void;
   addText: (text: string, extraOptions?: ITextboxOptions) => void;
+  updateText: (extraOptions?: Partial<Textbox>) => void;
   deleteAll: () => void;
   deleteSelected: () => void;
 }
@@ -39,6 +46,16 @@ const buildEditor = (canvas: fabric.Canvas): FabricJSEditor => {
       object.set({ text });
       canvas.add(object);
     },
+    updateText: (extraOptions?: Partial<Textbox>) => {
+      const objects: any[] = canvas.getActiveObjects();
+      if (objects.length && objects[0].type === 'text') {
+        const textObject: fabric.Textbox = objects[0];
+        if (extraOptions) {
+          textObject.set(extraOptions);
+          canvas.renderAll();
+        }
+      }
+    },
     deleteAll: () => {
       canvas.getObjects().forEach((object) => canvas.remove(object));
       canvas.discardActiveObject();
@@ -54,22 +71,22 @@ const buildEditor = (canvas: fabric.Canvas): FabricJSEditor => {
 
 const useFabricJSEditor = () => {
   const [canvas, setCanvas] = useState<null | fabric.Canvas>(null);
-  const [selectedObjects, setSelectedObject] = useState<fabric.Object[]>([]);
+  const [selectedObject, setSelectedObject] = useState<fabric.Object>();
   const [editor, setEditor] = useState<FabricJSEditor>();
 
   useEffect(() => {
     const bindEvents = (canva: fabric.Canvas) => {
       canva.on('selection:cleared', () => {
-        setSelectedObject([]);
+        setSelectedObject(undefined);
       });
       canva.on('selection:created', (e: any) => {
-        setSelectedObject(e.selected);
+        setSelectedObject(e.selected[0]);
       });
       canva.on('selection:updated', (e: any) => {
-        setSelectedObject(e.selected);
+        setSelectedObject(e.selected[0]);
       });
       canva.on('selection:updated', (e: any) => {
-        setSelectedObject(e.selected);
+        setSelectedObject(e.selected[0]);
       });
     };
 
@@ -80,7 +97,7 @@ const useFabricJSEditor = () => {
   }, [canvas]);
 
   return {
-    selectedObjects,
+    selectedObject,
     onReady: (canvasReady: fabric.Canvas): void => {
       setCanvas(canvasReady);
       console.log('Fabric canvas ready');

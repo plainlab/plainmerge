@@ -23,9 +23,9 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { FileFilter, IpcMainInvokeEvent } from 'electron/main';
 import fs from 'fs';
-import { PDFDocument } from 'pdf-lib';
 import { promisify } from 'util';
 import MenuBuilder from './menu';
+import renderPdf, { RenderPdf } from './render';
 
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
@@ -181,56 +181,18 @@ ipcMain.handle('get-store', (_event, { key }) => {
   return store.get(key);
 });
 
-interface CanvasObject {
-  text: string;
-  type: string;
-  top: number;
-  left: number;
-  fontSize: number;
-}
-
-interface Canvas {
-  objects: CanvasObject[];
-}
-
-interface RenderPdf {
-  pdfFile: string;
-  pageNumber: number;
-  canvasData: Canvas;
-}
-
 ipcMain.handle(
   'render-pdf',
   async (_event, { pdfFile, pageNumber, canvasData }: RenderPdf) => {
-    const pdfBuff = await readFile(pdfFile);
-    const pdfDoc = await PDFDocument.load(pdfBuff);
-
-    const pages = pdfDoc.getPages();
-    const page = pages[pageNumber];
-
-    const { height } = page.getSize();
-
-    canvasData.objects.forEach((obj: CanvasObject) => {
-      if (obj.type === 'text') {
-        page.drawText(obj.text, {
-          x: obj.left,
-          y: height - obj.top,
-          size: obj.fontSize,
-        });
-      }
-    });
-
     const file = await dialog.showSaveDialog({
       filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
     });
 
     if (!file || !file.filePath) return;
 
-    const newDoc = await PDFDocument.create();
-    const [newPage] = await newDoc.copyPages(pdfDoc, [pageNumber]);
-    newDoc.addPage(newPage);
-
+    const newDoc = await renderPdf(pdfFile, pageNumber - 1, canvasData);
     const pdfBytes = await newDoc.save();
+
     await writeFile(file.filePath, pdfBytes);
   }
 );

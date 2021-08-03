@@ -1,16 +1,24 @@
-import React, { DragEventHandler, useRef, useState } from 'react';
+import React, { DragEventHandler, useEffect, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf/dist/esm/entry.webpack';
 import { ipcRenderer } from 'electron';
 // eslint-disable-next-line
 // @ts-ignore
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
+import { StandardFonts, StandardFontValues } from 'pdf-lib';
+import { Textbox } from 'fabric/fabric-impl';
 import { FabricJSCanvas, useFabricJSEditor } from '../fabric/Canvas';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 const PdfEditor = () => {
+  const { editor, onReady, selectedObject } = useFabricJSEditor();
+
+  const [fontFamily, setFontFamily] = useState(
+    StandardFonts.Helvetica as string
+  );
+  const [fontSize, setFontSize] = useState(16);
+
   const [pdfFile, setPdfFile] = useState('');
-  const { editor, onReady } = useFabricJSEditor();
   const [numPages, setNumPages] = useState(1);
   const [pageNumber, setPageNumber] = useState(1);
   const [opening, setOpening] = useState(false);
@@ -83,6 +91,26 @@ const PdfEditor = () => {
     },
   ];
 
+  const fonts = StandardFontValues.map((value) => ({
+    label: value.replace('-', ' '),
+    value,
+  }));
+
+  const fontSizes = [8, 10, 12, 14, 16, 18, 24, 30, 36, 48, 60];
+
+  useEffect(() => {
+    editor?.updateText({
+      fontFamily,
+      fontSize,
+    });
+  }, [fontFamily, fontSize]);
+
+  useEffect(() => {
+    const text = selectedObject as Textbox;
+    setFontFamily(text?.fontFamily || 'Helvetica');
+    setFontSize(text?.fontSize || 16);
+  }, [selectedObject]);
+
   return (
     <div>
       <span className="flex space-x-2">
@@ -100,24 +128,51 @@ const PdfEditor = () => {
       </span>
 
       <section className="flex">
-        <section className="flex-shrink-0 w-50">
-          <p>Field list</p>
-          <ul className="flex flex-col items-center justify-start space-y-2">
-            {headings.map(({ index, label }) => (
-              <li
-                key={index}
-                className="p-3 border border-gray-500 rounded"
-                onDragStart={(e) => {
-                  e.dataTransfer.setData('Text', label);
-                }}
-                draggable
-              >
-                {label}
-              </li>
-            ))}
-          </ul>
+        <section>
+          <section className="flex-shrink-0 w-50">
+            <p>Field list</p>
+            <ul className="flex flex-col items-center justify-start space-y-2">
+              {headings.map(({ index, label }) => (
+                <li
+                  key={index}
+                  className="p-3 border border-gray-500 rounded"
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('Text', label);
+                  }}
+                  draggable
+                >
+                  {label}
+                </li>
+              ))}
+            </ul>
+          </section>
         </section>
-        <section className="flex-1">
+
+        <section className="flex flex-col flex-1">
+          <section className="flex">
+            <select
+              onChange={(e) => setFontFamily(e.target.value)}
+              value={fontFamily}
+            >
+              {fonts.map(({ label, value }) => (
+                <option value={value} key={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              onChange={(e) => setFontSize(parseInt(e.target.value, 10) || 16)}
+              value={fontSize}
+            >
+              {fontSizes.map((v) => (
+                <option value={v} key={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </section>
+
           <Document
             file={pdfFile}
             onLoadSuccess={handleDocumentLoadSuccess}
