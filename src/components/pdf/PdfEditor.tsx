@@ -32,12 +32,14 @@ const PdfEditor = () => {
     setOpening(true);
     const filters = [{ name: 'PDF Files', extensions: ['pdf'] }];
     const path = await ipcRenderer.invoke('open-file', filters, 'path');
-    setPdfFile(path);
     setOpening(false);
 
-    // Reset nav & canvas
-    setLoaded(false);
-    setShowCanvas(false);
+    if (path) {
+      setPdfFile(path);
+      // Reset nav & canvas
+      setLoaded(false);
+      setShowCanvas(false);
+    }
   };
 
   const handleSave = async () => {

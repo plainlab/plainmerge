@@ -9,7 +9,7 @@ const TextOptions: ITextboxOptions = {
   fontSize: 16,
   fontFamily: 'Helvetica',
   fill: '#000000',
-  width: 150,
+  width: 200,
   lockRotation: true,
   lockSkewingX: true,
   lockSkewingY: true,
@@ -17,6 +17,9 @@ const TextOptions: ITextboxOptions = {
   lockScalingY: true,
   hasControls: false,
   editable: false,
+  originX: 'left',
+  originY: 'top',
+  padding: 1,
 };
 
 export interface FabricJSEditor {
