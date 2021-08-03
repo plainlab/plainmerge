@@ -1,4 +1,4 @@
-import React, { DragEventHandler, LegacyRef, useRef, useState } from 'react';
+import React, { DragEventHandler, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf/dist/esm/entry.webpack';
 import { ipcRenderer } from 'electron';
 // eslint-disable-next-line
