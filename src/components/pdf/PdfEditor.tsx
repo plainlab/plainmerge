@@ -173,6 +173,14 @@ const PdfEditor = () => {
                 </option>
               ))}
             </select>
+
+            <button
+              type="button"
+              className="btn-link"
+              onClick={() => editor?.deleteSelected()}
+            >
+              Delete
+            </button>
           </section>
 
           <Document

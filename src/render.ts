@@ -48,8 +48,8 @@ const renderPdf = async (
       const font = await getFont(o.fontFamily, pdfDoc);
       const size = o.fontSize || 16;
       // pdf-lib draw text at baseline, fabric use bounding box
-      // this should be descender, not heightAtSize, but whatever...
-      const offset = font.heightAtSize(size) / 3;
+      const offset =
+        font.heightAtSize(size) - font.heightAtSize(size, { descender: false });
 
       page.drawText(o.text || '', {
         x: (o.left || 0) + 1,
