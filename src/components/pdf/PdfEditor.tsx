@@ -32,6 +32,11 @@ const PdfEditor = () => {
   const [opening, setOpening] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [showCanvas, setShowCanvas] = useState(false);
+
+  const [canvasW, setCanvasW] = useState(0);
+  const [canvasH, setCanvasH] = useState(0);
+
+  const parentRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleOpen = async () => {
@@ -53,6 +58,8 @@ const PdfEditor = () => {
       pdfFile,
       pageNumber,
       canvasData: editor?.dump(),
+      width: canvasW,
+      height: canvasH,
     });
   };
 
@@ -60,6 +67,12 @@ const PdfEditor = () => {
     setNumPages(doc.numPages);
     setPageNumber(1);
     setLoaded(true);
+  };
+
+  const handlePageLoadSuccess = (doc: { width: number; height: number }) => {
+    setCanvasH(doc.height);
+    setCanvasW(doc.width);
+    setShowCanvas(true);
   };
 
   const handleDocumentError = (e: any) => {
@@ -124,7 +137,7 @@ const PdfEditor = () => {
 
   return (
     <div className="flex space-x-4">
-      <section className="space-y-4 w-60">
+      <section className="flex-shrink-0 space-y-4 w-60">
         <button
           type="button"
           className="btn"
@@ -261,22 +274,21 @@ const PdfEditor = () => {
               onLoadError={handleDocumentError}
               onSourceError={handleDocumentError}
             >
-              <Page
-                pageNumber={pageNumber}
-                onLoadSuccess={() => setShowCanvas(true)}
-                width={size.width || 500}
-              />
+              <div ref={parentRef}>
+                <Page
+                  pageNumber={pageNumber}
+                  onLoadSuccess={handlePageLoadSuccess}
+                  width={size.width || 500}
+                />
+              </div>
 
               {showCanvas && (
                 <FabricJSCanvas
                   className="absolute w-full border border-gray-300"
-                  style={{
-                    width: size.width || 500,
-                    height: size.height || 500,
-                  }}
                   onReady={onReady}
                   onDrop={handleDrop}
                   canvasRef={canvasRef}
+                  parentRef={parentRef}
                 />
               )}
             </Document>

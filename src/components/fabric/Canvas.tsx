@@ -15,6 +15,7 @@ export interface Props {
   onDrop?: DragEventHandler;
   style?: CSSProperties;
   canvasRef: RefObject<HTMLCanvasElement>;
+  parentRef: RefObject<HTMLDivElement>;
 }
 
 const FabricJSCanvas = ({
@@ -23,9 +24,8 @@ const FabricJSCanvas = ({
   onDrop,
   style,
   canvasRef,
+  parentRef,
 }: Props) => {
-  const parentRef = useRef<HTMLDivElement>(null);
-
   const setCurrentDimensions = (canvas: fabric.Canvas) => {
     canvas.setHeight(parentRef?.current?.clientHeight || 0);
     canvas.setWidth(parentRef?.current?.clientWidth || 0);
@@ -52,7 +52,7 @@ const FabricJSCanvas = ({
   }, []);
 
   return (
-    <div ref={parentRef} className={className} style={style} onDrop={onDrop}>
+    <div className={className} style={style} onDrop={onDrop}>
       <canvas ref={canvasRef} />
     </div>
   );
