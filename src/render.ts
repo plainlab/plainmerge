@@ -1,5 +1,13 @@
 import { Rect, Textbox } from 'fabric/fabric-impl';
-import { PDFDocument, degrees, StandardFonts, PDFFont, rgb } from 'pdf-lib';
+import {
+  PDFDocument,
+  degrees,
+  StandardFonts,
+  PDFFont,
+  rgb,
+  layoutMultilineText,
+  TextAlignment,
+} from 'pdf-lib';
 import fs from 'fs';
 import { promisify } from 'util';
 
@@ -63,14 +71,27 @@ const renderPdf = async (
         font.heightAtSize(size) - font.heightAtSize(size, { descender: false });
 
       const rgbCode = hexToRgb(o.fill as string);
-      page.drawText(o.text || '', {
-        x: (o.left || 0) + 1,
-        y: height - (o.top || 0) - (o.height || 0) + offset,
-        lineHeight: o.lineHeight,
-        rotate: degrees(o.angle || 0),
-        size,
+      const color = rgb(rgbCode.r / 255, rgbCode.g / 255, rgbCode.b / 255);
+      const x = (o.left || 0) + 1;
+      const y = height - (o.top || 0) - (o.height || 0) + offset;
+
+      const multiText = layoutMultilineText(o.text || '', {
+        alignment: TextAlignment.Left,
         font,
-        color: rgb(rgbCode.r / 255, rgbCode.g / 255, rgbCode.b / 255),
+        fontSize: size,
+        bounds: { x, y, width: o.width || 100, height: o.height || 100 },
+      });
+
+      multiText.lines.forEach((p) => {
+        page.drawText(p.text, {
+          x: p.x,
+          y: p.y,
+          lineHeight: o.lineHeight,
+          size,
+          font,
+          maxWidth: o.width,
+          color,
+        });
       });
     } else if (obj.type === 'qrcode') {
       // TODO: Handle qrcode here

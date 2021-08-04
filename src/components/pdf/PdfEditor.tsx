@@ -7,7 +7,6 @@ import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
 import { StandardFonts, StandardFontValues } from 'pdf-lib';
 import { Textbox } from 'fabric/fabric-impl';
 import { TwitterPicker } from 'react-color';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { FabricJSCanvas, useFabricJSEditor } from '../fabric/Canvas';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
@@ -85,15 +84,15 @@ const PdfEditor = () => {
   const headings = [
     {
       index: 0,
-      label: 'Heading 1',
+      label: 'Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long ',
     },
     {
       index: 1,
-      label: 'Heading 2',
+      label: 'Heading 2Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long ',
     },
     {
       index: 2,
-      label: 'Heading 3',
+      label: 'Heading 3Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long ',
     },
   ];
 
@@ -158,7 +157,7 @@ const PdfEditor = () => {
 
         <section className="flex flex-col flex-1">
           {pdfFile ? (
-            <section className="flex">
+            <section className="relative flex">
               <select
                 onChange={(e) => setFontFamily(e.target.value)}
                 value={fontFamily}
@@ -181,28 +180,32 @@ const PdfEditor = () => {
                   </option>
                 ))}
               </select>
-              <button
-                className="w-10 h-10 border rounded"
+              <div
+                className="w-10 h-10 p-1 border-2 border-white rounded"
+                style={{ backgroundColor: fill }}
                 onClick={() => setShowPicker(true)}
-                type="button"
-              >
-                <FontAwesomeIcon icon="fill" color={fill} />
-              </button>
+                role="button"
+                aria-labelledby="pick"
+                onKeyPress={() => setShowPicker(true)}
+                tabIndex={0}
+              />
               {showPicker ? (
-                <div className="absolute z-10">
-                  <div
-                    role="switch"
-                    aria-checked="true"
-                    aria-labelledby="cover"
-                    className="fixed inset-0"
-                    onClick={() => setShowPicker(false)}
-                    onKeyPress={() => setShowPicker(false)}
-                    tabIndex={0}
-                  />
-                  <TwitterPicker
-                    color={fill}
-                    onChangeComplete={(c) => setFill(c.hex)}
-                  />
+                <div className="relative">
+                  <div className="absolute z-10">
+                    <div
+                      role="button"
+                      aria-labelledby="cover"
+                      className="fixed inset-0"
+                      onClick={() => setShowPicker(false)}
+                      onKeyPress={() => setShowPicker(false)}
+                      tabIndex={0}
+                    />
+                    <TwitterPicker
+                      color={fill}
+                      triangle="hide"
+                      onChangeComplete={(c) => setFill(c.hex)}
+                    />
+                  </div>
                 </div>
               ) : null}
               <button
