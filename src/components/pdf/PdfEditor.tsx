@@ -6,6 +6,8 @@ import { ipcRenderer } from 'electron';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
 import { StandardFonts, StandardFontValues } from 'pdf-lib';
 import { Textbox } from 'fabric/fabric-impl';
+import { TwitterPicker } from 'react-color';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { FabricJSCanvas, useFabricJSEditor } from '../fabric/Canvas';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
@@ -17,6 +19,8 @@ const PdfEditor = () => {
     StandardFonts.Helvetica as string
   );
   const [fontSize, setFontSize] = useState(16);
+  const [fill, setFill] = useState('#000');
+  const [showPicker, setShowPicker] = useState(false);
 
   const [pdfFile, setPdfFile] = useState('');
   const [numPages, setNumPages] = useState(1);
@@ -104,13 +108,15 @@ const PdfEditor = () => {
     editor?.updateText({
       fontFamily,
       fontSize,
+      fill,
     });
-  }, [fontFamily, fontSize]);
+  }, [fontFamily, fontSize, fill]);
 
   useEffect(() => {
     const text = selectedObject as Textbox;
     setFontFamily(text?.fontFamily || 'Helvetica');
     setFontSize(text?.fontSize || 16);
+    setFill((text?.fill as string) || '#000');
   }, [selectedObject]);
 
   return (
@@ -151,37 +157,63 @@ const PdfEditor = () => {
         </section>
 
         <section className="flex flex-col flex-1">
-          <section className="flex">
-            <select
-              onChange={(e) => setFontFamily(e.target.value)}
-              value={fontFamily}
-            >
-              {fonts.map(({ label, value }) => (
-                <option value={value} key={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-
-            <select
-              onChange={(e) => setFontSize(parseInt(e.target.value, 10) || 16)}
-              value={fontSize}
-            >
-              {fontSizes.map((v) => (
-                <option value={v} key={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-
-            <button
-              type="button"
-              className="btn-link"
-              onClick={() => editor?.deleteSelected()}
-            >
-              Delete
-            </button>
-          </section>
+          {pdfFile ? (
+            <section className="flex">
+              <select
+                onChange={(e) => setFontFamily(e.target.value)}
+                value={fontFamily}
+              >
+                {fonts.map(({ label, value }) => (
+                  <option value={value} key={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <select
+                onChange={(e) =>
+                  setFontSize(parseInt(e.target.value, 10) || 16)
+                }
+                value={fontSize}
+              >
+                {fontSizes.map((v) => (
+                  <option value={v} key={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+              <button
+                className="w-10 h-10 border rounded"
+                onClick={() => setShowPicker(true)}
+                type="button"
+              >
+                <FontAwesomeIcon icon="fill" color={fill} />
+              </button>
+              {showPicker ? (
+                <div className="absolute z-10">
+                  <div
+                    role="switch"
+                    aria-checked="true"
+                    aria-labelledby="cover"
+                    className="fixed inset-0"
+                    onClick={() => setShowPicker(false)}
+                    onKeyPress={() => setShowPicker(false)}
+                    tabIndex={0}
+                  />
+                  <TwitterPicker
+                    color={fill}
+                    onChangeComplete={(c) => setFill(c.hex)}
+                  />
+                </div>
+              ) : null}
+              <button
+                type="button"
+                className="btn-link"
+                onClick={() => editor?.deleteSelected()}
+              >
+                Delete
+              </button>
+            </section>
+          ) : null}
 
           <Document
             file={pdfFile}

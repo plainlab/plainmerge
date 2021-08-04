@@ -1,5 +1,5 @@
 import { Rect, Textbox } from 'fabric/fabric-impl';
-import { PDFDocument, degrees, StandardFonts, PDFFont } from 'pdf-lib';
+import { PDFDocument, degrees, StandardFonts, PDFFont, rgb } from 'pdf-lib';
 import fs from 'fs';
 import { promisify } from 'util';
 
@@ -26,6 +26,17 @@ const getFont = async (font: string | undefined, pdfDoc: PDFDocument) => {
   return cachedFonts[key];
 };
 
+function hexToRgb(hex: string) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+      }
+    : { r: 0, g: 0, b: 0 };
+}
+
 const renderPdf = async (
   pdfFile: string,
   pageIndex: number,
@@ -51,6 +62,7 @@ const renderPdf = async (
       const offset =
         font.heightAtSize(size) - font.heightAtSize(size, { descender: false });
 
+      const rgbCode = hexToRgb(o.fill as string);
       page.drawText(o.text || '', {
         x: (o.left || 0) + 1,
         y: height - (o.top || 0) - (o.height || 0) + offset,
@@ -58,6 +70,7 @@ const renderPdf = async (
         rotate: degrees(o.angle || 0),
         size,
         font,
+        color: rgb(rgbCode.r / 255, rgbCode.g / 255, rgbCode.b / 255),
       });
     } else if (obj.type === 'qrcode') {
       // TODO: Handle qrcode here
