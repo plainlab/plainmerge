@@ -5,9 +5,9 @@
   "description": "Plain PDF Mail Merger",
   "main": "./main.prod.js",
   "author": {
-    "name": "PlainLabs",
-    "email": "labs@manhtai.com",
-    "url": "https://github.com/plainlabs"
+    "name": "PlainLab",
+    "email": "plainlab@pm.me",
+    "url": "https://github.com/plainlab"
   },
   "scripts": {
     "electron-rebuild": "node -r ../.erb/scripts/BabelRegister.js ../.erb/scripts/ElectronRebuild.js",

@@ -153,15 +153,15 @@ export default class MenuBuilder {
       label: 'Help',
       submenu: [
         {
-          label: 'PlainLabs home page',
+          label: 'PlainLab home page',
           click() {
-            shell.openExternal('https://plainlabs.github.io');
+            shell.openExternal('https://plainlab.github.io');
           },
         },
         {
           label: 'PlainMerge repo',
           click() {
-            shell.openExternal('https://github.com/plainlabs/plainmerge');
+            shell.openExternal('https://github.com/plainlab/plainmerge');
           },
         },
       ],
@@ -242,13 +242,13 @@ export default class MenuBuilder {
           {
             label: 'Home Page',
             click() {
-              shell.openExternal('https://plainlabs.github.io');
+              shell.openExternal('https://plainlab.github.io');
             },
           },
           {
             label: 'GitHub',
             click() {
-              shell.openExternal('https://github.com/plainlabs/plainmerge');
+              shell.openExternal('https://github.com/plainlab/plainmerge');
             },
           },
         ],

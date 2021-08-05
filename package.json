@@ -87,22 +87,22 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "plainlabs",
+      "owner": "plainlab",
       "repo": "plainmerge"
     }
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/plainlabs/plainmerge.git"
+    "url": "git+https://github.com/plainlab/plainmerge.git"
   },
   "author": {
-    "name": "PlainLabs",
-    "email": "labs@manhtai.com",
-    "url": "https://plainlabs.github.io"
+    "name": "PlainLab",
+    "email": "plainlab@pm.me",
+    "url": "https://plainlab.github.io"
   },
   "license": "GPL-3.0-only",
   "bugs": {
-    "url": "https://github.com/plainlabs/plainmerge/issues"
+    "url": "https://github.com/plainlab/plainmerge/issues"
   },
   "keywords": [
     "electron",

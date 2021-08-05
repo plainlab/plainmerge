@@ -1,4 +1,4 @@
-[![Test](https://github.com/plainlabs/plainmerge/actions/workflows/test.yml/badge.svg)](https://github.com/plainlabs/plainmerge/actions/workflows/test.yml)
+[![Test](https://github.com/plainlab/plainmerge/actions/workflows/test.yml/badge.svg)](https://github.com/plainlab/plainmerge/actions/workflows/test.yml)
 
 > A plain PDF mail merger
 
