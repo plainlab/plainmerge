@@ -33,10 +33,21 @@ const buildEditor = (canvas: fabric.Canvas): FabricJSEditor => {
   return {
     canvas,
     dump: () => {
-      return canvas.toJSON();
+      return {
+        objects: canvas.getObjects().map((o) => {
+          const out = o.toJSON();
+          out.index = o.data && parseInt(o.data.index, 10);
+          return out;
+        }),
+      };
     },
     load: (data) => {
       canvas.loadFromJSON(data, () => {});
+      canvas.getObjects().forEach((o, i) => {
+        if (data.objects[i].index !== undefined) {
+          o.data = { index: data.objects[i].index };
+        }
+      });
     },
     addText: (text: string, extraOptions?: ITextboxOptions) => {
       const object = new fabric.Textbox(text, {

@@ -18,8 +18,11 @@ const writeFile = promisify(fs.writeFile);
 
 const SheetRowsLimit = 100;
 
+interface MyTextbox extends Textbox {
+  index: number;
+}
 export interface CanvasObjects {
-  objects: [Textbox | Rect];
+  objects: [MyTextbox | Rect];
 }
 
 export interface RenderPdf {
@@ -59,18 +62,21 @@ const getFont = async (
 
 const sheetToArray = (sheet: XLSX.WorkSheet) => {
   const result = [];
-  const range = XLSX.utils.decode_range(sheet['!fullref']);
-  for (let rowNum = range.s.r; rowNum <= range.e.r; rowNum += 1) {
-    const row = [];
-    for (let colNum = range.s.c; colNum <= range.e.c; colNum += 1) {
-      const nextCell = sheet[XLSX.utils.encode_cell({ r: rowNum, c: colNum })];
-      if (!nextCell) {
-        row.push('');
-      } else {
-        row.push(nextCell.v);
+  if (sheet['!ref']) {
+    const range = XLSX.utils.decode_range(sheet['!ref']);
+    for (let rowNum = range.s.r; rowNum <= range.e.r; rowNum += 1) {
+      const row = [];
+      for (let colNum = range.s.c; colNum <= range.e.c; colNum += 1) {
+        const nextCell =
+          sheet[XLSX.utils.encode_cell({ r: rowNum, c: colNum })];
+        if (!nextCell) {
+          row.push('');
+        } else {
+          row.push(nextCell.v);
+        }
       }
+      result.push(row);
     }
-    result.push(row);
   }
   return result;
 };
@@ -105,7 +111,7 @@ const renderPage = async (
   for (let i = 0; i < canvasData.objects.length; i += 1) {
     const obj = canvasData.objects[i];
     if (obj.type === 'text') {
-      const o = obj as Textbox;
+      const o = obj as MyTextbox;
 
       const rgbCode = hexToRgb(o.fill as string);
       const color = rgb(rgbCode.r / 255, rgbCode.g / 255, rgbCode.b / 255);
@@ -124,7 +130,7 @@ const renderPage = async (
       const y =
         height - (o.top || 0) * ratio - (o.height || 0) * ratio + offset;
 
-      const text = row[o.data.index];
+      const text = row[o.index];
       const multiText = layoutMultilineText(text || '', {
         alignment: TextAlignment.Left,
         font,

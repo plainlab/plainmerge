@@ -200,6 +200,16 @@ ipcMain.handle(
 
     if (!file || !file.filePath) return;
 
+    console.log(
+      'Render pdf',
+      pdfFile,
+      pageNumber,
+      excelFile,
+      combinePdf,
+      canvasData,
+      canvasWidth
+    );
+
     await renderPdf(
       file.filePath,
       pdfFile,

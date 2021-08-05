@@ -101,11 +101,11 @@ const PdfEditor = () => {
   const handleSave = async () => {
     ipcRenderer.invoke('render-pdf', {
       pdfFile,
+      pageNumber,
       excelFile,
       combinePdf,
-      pageNumber,
       canvasData: editor?.dump(),
-      width: parentRef.current?.clientWidth,
+      canvasWidth: parentRef.current?.clientWidth,
     });
   };
 
