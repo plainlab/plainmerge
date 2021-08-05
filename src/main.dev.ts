@@ -183,17 +183,32 @@ ipcMain.handle('get-store', (_event, { key }) => {
 
 ipcMain.handle(
   'render-pdf',
-  async (_event, { pdfFile, pageNumber, canvasData, width }: RenderPdf) => {
+  async (
+    _event,
+    {
+      pdfFile,
+      pageNumber,
+      excelFile,
+      combinePdf,
+      canvasData,
+      canvasWidth,
+    }: RenderPdf
+  ) => {
     const file = await dialog.showSaveDialog({
       filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
     });
 
     if (!file || !file.filePath) return;
 
-    const newDoc = await renderPdf(pdfFile, pageNumber - 1, canvasData, width);
-    const pdfBytes = await newDoc.save();
-
-    await writeFile(file.filePath, pdfBytes);
+    await renderPdf(
+      file.filePath,
+      pdfFile,
+      pageNumber - 1,
+      excelFile,
+      combinePdf,
+      canvasData,
+      canvasWidth
+    );
   }
 );
 

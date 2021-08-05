@@ -94,7 +94,6 @@ const PdfEditor = () => {
         const range = XLSX.utils.decode_range(firstSheet['!fullref']);
         const rows = range.e.r - range.s.r;
         setPages(rows);
-        console.log('hey', rows, range);
       }
     }
   };
@@ -129,9 +128,12 @@ const PdfEditor = () => {
       top: 0,
       left: 0,
     };
-    editor?.addText(e.dataTransfer.getData('Text'), {
+    const text = e.dataTransfer.getData('Text');
+    const index = e.dataTransfer.getData('Index');
+    editor?.addText(text, {
       left: e.clientX - left,
       top: e.clientY - top,
+      data: { index },
     });
     e.stopPropagation();
   };
@@ -184,6 +186,7 @@ const PdfEditor = () => {
               }`}
               onDragStart={(e) => {
                 e.dataTransfer.setData('Text', label);
+                e.dataTransfer.setData('Index', String(index));
               }}
               onClick={() => handleClickAddText(label)}
               draggable

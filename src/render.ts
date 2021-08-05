@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import { Rect, Textbox } from 'fabric/fabric-impl';
 import {
   PDFDocument,
@@ -6,11 +7,16 @@ import {
   rgb,
   layoutMultilineText,
   TextAlignment,
+  PDFPage,
 } from 'pdf-lib';
 import fs from 'fs';
 import { promisify } from 'util';
+import XLSX from 'xlsx';
 
 const readFile = promisify(fs.readFile);
+const writeFile = promisify(fs.writeFile);
+
+const SheetRowsLimit = 100;
 
 export interface CanvasObjects {
   objects: [Textbox | Rect];
@@ -22,19 +28,11 @@ export interface RenderPdf {
   combinePdf: boolean;
   pageNumber: number;
   canvasData: CanvasObjects;
-  width: number;
+  canvasWidth: number;
 }
 
 type FontMap = Record<string, PDFFont>;
-const cachedFonts: FontMap = {};
-
-const getFont = async (font: string | undefined, pdfDoc: PDFDocument) => {
-  const key = font || StandardFonts.Helvetica;
-  if (!cachedFonts[key]) {
-    cachedFonts[key] = await pdfDoc.embedFont(key);
-  }
-  return cachedFonts[key];
-};
+type RowMap = Record<number, string>;
 
 function hexToRgb(hex: string) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -47,21 +45,62 @@ function hexToRgb(hex: string) {
     : { r: 0, g: 0, b: 0 };
 }
 
-const renderPdf = async (
-  pdfFile: string,
-  pageIndex: number,
-  canvasData: CanvasObjects,
-  width: number
+const getFont = async (
+  font: string | undefined,
+  pdfDoc: PDFDocument,
+  cachedFonts: FontMap
 ) => {
-  const pdfBuff = await readFile(pdfFile);
-  const pdfDoc = await PDFDocument.load(pdfBuff);
+  const key = font || StandardFonts.Helvetica;
+  if (!cachedFonts[key]) {
+    cachedFonts[key] = await pdfDoc.embedFont(key);
+  }
+  return cachedFonts[key];
+};
 
-  const pages = pdfDoc.getPages();
-  const page = pages[pageIndex];
+const sheetToArray = (sheet: XLSX.WorkSheet) => {
+  const result = [];
+  const range = XLSX.utils.decode_range(sheet['!fullref']);
+  for (let rowNum = range.s.r; rowNum <= range.e.r; rowNum += 1) {
+    const row = [];
+    for (let colNum = range.s.c; colNum <= range.e.c; colNum += 1) {
+      const nextCell = sheet[XLSX.utils.encode_cell({ r: rowNum, c: colNum })];
+      if (!nextCell) {
+        row.push('');
+      } else {
+        row.push(nextCell.v);
+      }
+    }
+    result.push(row);
+  }
+  return result;
+};
 
-  const { width: w, height } = page.getSize();
+const readFirstSheet = (path: string) => {
+  const workbook = XLSX.readFile(path, { sheetRows: SheetRowsLimit });
+  const sheetsList = workbook.SheetNames;
+  const firstSheet = workbook.Sheets[sheetsList[0]];
+  const rows = sheetToArray(firstSheet)
+    .slice(1) // Skip header
+    .map((arr) => {
+      const row: RowMap = {};
+      arr.forEach((r, i) => {
+        row[i] = r;
+      });
+      return row;
+    });
+  return rows;
+};
 
-  const ratio = w / width;
+const renderPage = async (
+  row: RowMap,
+  page: PDFPage,
+  canvasData: CanvasObjects,
+  canvasWidth: number,
+  pdfDoc: PDFDocument,
+  cachedFonts: FontMap
+) => {
+  const { width, height } = page.getSize();
+  const ratio = width / canvasWidth;
 
   for (let i = 0; i < canvasData.objects.length; i += 1) {
     const obj = canvasData.objects[i];
@@ -72,7 +111,7 @@ const renderPdf = async (
       const color = rgb(rgbCode.r / 255, rgbCode.g / 255, rgbCode.b / 255);
 
       // eslint-disable-next-line no-await-in-loop
-      const font = await getFont(o.fontFamily, pdfDoc);
+      const font = await getFont(o.fontFamily, pdfDoc, cachedFonts);
 
       // FIXME: Font size is just an illusion...
       const size = (o.fontSize || 16) * ratio;
@@ -85,7 +124,8 @@ const renderPdf = async (
       const y =
         height - (o.top || 0) * ratio - (o.height || 0) * ratio + offset;
 
-      const multiText = layoutMultilineText(o.text || '', {
+      const text = row[o.data.index];
+      const multiText = layoutMultilineText(text || '', {
         alignment: TextAlignment.Left,
         font,
         fontSize: size,
@@ -112,11 +152,57 @@ const renderPdf = async (
       // TODO: Handle qrcode here
     }
   }
+};
 
-  const newDoc = await PDFDocument.create();
-  const [newPage] = await newDoc.copyPages(pdfDoc, [pageIndex]);
-  newDoc.addPage(newPage);
-  return newDoc;
+const renderPdf = async (
+  output: string,
+  pdfFile: string,
+  pageIndex: number,
+  excelFile: string,
+  combinePdf: boolean,
+  canvasData: CanvasObjects,
+  canvasWidth: number
+) => {
+  const pdfBuff = await readFile(pdfFile);
+  const pdfDoc = await PDFDocument.load(pdfBuff);
+
+  let newDoc = await PDFDocument.create();
+  let [page] = await newDoc.copyPages(pdfDoc, [pageIndex]);
+  let cachedFonts: FontMap = {};
+
+  const rows: RowMap[] = readFirstSheet(excelFile);
+  for (let i = 0; i < rows.length; i += 1) {
+    if (!combinePdf) {
+      newDoc = await PDFDocument.create();
+      [page] = await newDoc.copyPages(pdfDoc, [pageIndex]);
+      cachedFonts = {};
+    }
+
+    await renderPage(
+      rows[i],
+      page,
+      canvasData,
+      canvasWidth,
+      newDoc,
+      cachedFonts
+    );
+    newDoc.addPage(page);
+
+    if (!combinePdf) {
+      const pdfBytes = await newDoc.save();
+      const outputs = output.split('.');
+      const outputi =
+        outputs.slice(0, outputs.length - 1).join('.') +
+        i +
+        outputs[outputs.length - 1];
+      await writeFile(outputi, pdfBytes);
+    }
+  }
+
+  if (combinePdf) {
+    const pdfBytes = await newDoc.save();
+    await writeFile(output, pdfBytes);
+  }
 };
 
 export default renderPdf;
