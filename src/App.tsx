@@ -15,7 +15,7 @@ export default function App() {
       <Switch>
         <Route path="/" component={Main} />
       </Switch>
-      <Redirect from="*" to="/auto" />
+      <Redirect from="*" to="/new" />
     </Router>
   );
 }

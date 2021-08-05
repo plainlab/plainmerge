@@ -28,7 +28,7 @@ const allRoutes = [
   },
 ];
 
-const navRoutes = allRoutes.slice(1);
+const navRoutes = allRoutes.slice(2);
 
 const Main = () => {
   return (
@@ -48,7 +48,7 @@ const Main = () => {
       </nav>
 
       {/* Main content */}
-      <main className="flex flex-col flex-1 p-8 overflow-y-auto bg-gray-200">
+      <main className="flex flex-col flex-1 overflow-y-auto">
         {allRoutes.map(({ path, name, Component }) => (
           <Route key={path} exact path={path}>
             <Component />

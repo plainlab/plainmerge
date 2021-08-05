@@ -7,6 +7,7 @@ import { ipcRenderer } from 'electron';
 // @ts-ignore
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
 import { StandardFonts, StandardFontValues } from 'pdf-lib';
+import XLSX from 'xlsx';
 import { Textbox } from 'fabric/fabric-impl';
 import { TwitterPicker } from 'react-color';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -15,6 +16,11 @@ import { SizeMe } from 'react-sizeme';
 import { FabricJSCanvas, useFabricJSEditor } from '../fabric/Canvas';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+
+interface Header {
+  index: number;
+  label: string;
+}
 
 const PdfEditor = () => {
   const { editor, onReady, selectedObject } = useFabricJSEditor();
@@ -27,23 +33,27 @@ const PdfEditor = () => {
   const [showPicker, setShowPicker] = useState(false);
 
   const [pdfFile, setPdfFile] = useState('');
+  const [excelFile, setExcelFile] = useState('');
   const [numPages, setNumPages] = useState(1);
   const [pageNumber, setPageNumber] = useState(1);
-  const [opening, setOpening] = useState(false);
+  const [openingPdf, setOpeningPdf] = useState(false);
+  const [openingExcel, setOpeningExcel] = useState(false);
+
   const [loaded, setLoaded] = useState(false);
   const [showCanvas, setShowCanvas] = useState(false);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const [pages, setPages] = useState(2);
+  const [pages, setPages] = useState(1);
+  const [headers, setHeaders] = useState<Header[]>([]);
   const [combinePdf, setCombinePdf] = useState(true);
 
-  const handleOpen = async () => {
-    setOpening(true);
+  const handleOpenPdf = async () => {
+    setOpeningPdf(true);
     const filters = [{ name: 'PDF Files', extensions: ['pdf'] }];
     const path = await ipcRenderer.invoke('open-file', filters, 'path');
-    setOpening(false);
+    setOpeningPdf(false);
 
     if (path) {
       setPdfFile(path);
@@ -53,9 +63,47 @@ const PdfEditor = () => {
     }
   };
 
+  const handleOpenExcel = async () => {
+    setOpeningExcel(true);
+    const filters = [
+      { name: 'Excel Files', extensions: ['xlsx', 'xls', 'ods'] },
+    ];
+    const path = await ipcRenderer.invoke('open-file', filters, 'path');
+    setOpeningExcel(false);
+
+    if (path) {
+      setExcelFile(path);
+      // Read headers
+      const workbook = XLSX.readFile(path, { sheetRows: 1 });
+      const sheetsList = workbook.SheetNames;
+      const firstSheet = workbook.Sheets[sheetsList[0]];
+      const sheetData = XLSX.utils.sheet_to_json(firstSheet, {
+        header: 1,
+        defval: '',
+        blankrows: true,
+      });
+      const labels = sheetData.map((_v, _i, array) => array).flat(2);
+      setHeaders(
+        labels.map((label, index) => ({
+          index,
+          label: label as string,
+        }))
+      );
+
+      if (firstSheet['!fullref']) {
+        const range = XLSX.utils.decode_range(firstSheet['!fullref']);
+        const rows = range.e.r - range.s.r;
+        setPages(rows);
+        console.log('hey', rows, range);
+      }
+    }
+  };
+
   const handleSave = async () => {
     ipcRenderer.invoke('render-pdf', {
       pdfFile,
+      excelFile,
+      combinePdf,
       pageNumber,
       canvasData: editor?.dump(),
       width: parentRef.current?.clientWidth,
@@ -92,21 +140,6 @@ const PdfEditor = () => {
     editor?.addText(text, { top: 100, left: 100 });
   };
 
-  const headings = [
-    {
-      index: 0,
-      label: 'Heading 1 with long Heading 1 with long Heading 1',
-    },
-    {
-      index: 1,
-      label: 'Heading 2Heading 1 with long Heading 1',
-    },
-    {
-      index: 2,
-      label: 'Heading 3Heading',
-    },
-  ];
-
   const fonts = StandardFontValues.map((value) => ({
     label: value.replace('-', ' '),
     value,
@@ -131,19 +164,19 @@ const PdfEditor = () => {
   }, [selectedObject]);
 
   return (
-    <div className="flex space-x-4">
-      <section className="flex-shrink-0 space-y-4 w-60">
+    <div className="flex flex-1">
+      <section className="flex-shrink-0 p-4 space-y-4 bg-gray-200 w-60">
         <button
           type="button"
           className="btn"
-          onClick={handleOpen}
-          disabled={opening}
+          onClick={handleOpenExcel}
+          disabled={openingExcel}
         >
           Choose Excel...
         </button>
 
         <ul className="flex flex-col items-center justify-start space-y-2">
-          {headings.map(({ index, label }) => (
+          {headers.map(({ index, label }) => (
             <li
               key={index}
               className={`p-3 border items-center w-full flex space-x-2 border-gray-500 rounded bg-gray-50 ${
@@ -162,13 +195,13 @@ const PdfEditor = () => {
         </ul>
       </section>
 
-      <section className="flex flex-col flex-1 space-y-4">
+      <section className="flex flex-col flex-1 p-4 space-y-4 bg-gray-100">
         <span className="flex justify-between">
           <button
             type="button"
             className="btn"
-            onClick={handleOpen}
-            disabled={opening}
+            onClick={handleOpenPdf}
+            disabled={openingPdf}
           >
             Choose PDF...
           </button>
@@ -276,7 +309,7 @@ const PdfEditor = () => {
                     checked={!combinePdf}
                     onChange={() => setCombinePdf(false)}
                   />
-                  <p>5 PDFs</p>
+                  <p>{pages} PDFs</p>
                 </label>
               ) : null}
             </section>

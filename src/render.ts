@@ -18,6 +18,8 @@ export interface CanvasObjects {
 
 export interface RenderPdf {
   pdfFile: string;
+  excelFile: string;
+  combinePdf: boolean;
   pageNumber: number;
   canvasData: CanvasObjects;
   width: number;
@@ -51,7 +53,6 @@ const renderPdf = async (
   canvasData: CanvasObjects,
   width: number
 ) => {
-  console.log('Render pdf with params', pdfFile, pageIndex, canvasData, width);
   const pdfBuff = await readFile(pdfFile);
   const pdfDoc = await PDFDocument.load(pdfBuff);
 
