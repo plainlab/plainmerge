@@ -36,6 +36,9 @@ const PdfEditor = () => {
   const parentRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const [pages, setPages] = useState(2);
+  const [combinePdf, setCombinePdf] = useState(true);
+
   const handleOpen = async () => {
     setOpening(true);
     const filters = [{ name: 'PDF Files', extensions: ['pdf'] }];
@@ -174,11 +177,11 @@ const PdfEditor = () => {
           </button>
         </span>
 
-        <section className="flex items-center justify-between">
-          {pdfFile ? (
+        {pdfFile ? (
+          <section className="flex items-center justify-between">
             <section
               className={`relative flex space-x-4 ${
-                selectedObject ? '' : 'opacity-30'
+                selectedObject ? '' : 'opacity-30 cursor-default'
               }`}
             >
               <select
@@ -239,6 +242,7 @@ const PdfEditor = () => {
                 type="button"
                 className="btn-link"
                 onClick={() => editor?.deleteSelected()}
+                disabled={!selectedObject}
               >
                 <FontAwesomeIcon
                   icon={['far', 'trash-alt']}
@@ -246,19 +250,45 @@ const PdfEditor = () => {
                 />
               </button>
             </section>
-          ) : (
-            <p />
-          )}
 
-          <p>3 pages</p>
-        </section>
+            <section className="flex items-center space-x-2">
+              <p>Merge into:</p>
+              <label htmlFor="combined" className="flex items-center space-x-1">
+                <input
+                  type="radio"
+                  className="rounded"
+                  name="seperator"
+                  id="combined"
+                  checked={combinePdf}
+                  onChange={() => setCombinePdf(true)}
+                />
+                <p>1 PDF</p>
+              </label>
+              {pages > 1 ? (
+                <label
+                  htmlFor="separated"
+                  className="flex items-center space-x-1"
+                >
+                  <input
+                    type="radio"
+                    name="seperator"
+                    id="separated"
+                    checked={!combinePdf}
+                    onChange={() => setCombinePdf(false)}
+                  />
+                  <p>5 PDFs</p>
+                </label>
+              ) : null}
+            </section>
+          </section>
+        ) : null}
 
         <SizeMe monitorHeight>
           {({ size }) => (
             <Document
               file={pdfFile}
               onLoadSuccess={handleDocumentLoadSuccess}
-              className="flex flex-1"
+              className="flex items-center justify-center flex-1"
               options={{
                 cMapUrl: 'cmaps/',
                 cMapPacked: true,
@@ -274,7 +304,7 @@ const PdfEditor = () => {
 
               {showCanvas && (
                 <FabricJSCanvas
-                  className="absolute border-4 border-blue-600"
+                  className="absolute"
                   onReady={onReady}
                   onDrop={handleDrop}
                   canvasRef={canvasRef}
