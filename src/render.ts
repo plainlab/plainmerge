@@ -173,17 +173,11 @@ const renderPdf = async (
   const pdfDoc = await PDFDocument.load(pdfBuff);
 
   let newDoc = await PDFDocument.create();
-  let [page] = await newDoc.copyPages(pdfDoc, [pageIndex]);
   let cachedFonts: FontMap = {};
 
   const rows: RowMap[] = readFirstSheet(excelFile);
   for (let i = 0; i < rows.length; i += 1) {
-    if (!combinePdf) {
-      newDoc = await PDFDocument.create();
-      [page] = await newDoc.copyPages(pdfDoc, [pageIndex]);
-      cachedFonts = {};
-    }
-
+    const [page] = await newDoc.copyPages(pdfDoc, [pageIndex]);
     await renderPage(
       rows[i],
       page,
@@ -202,6 +196,10 @@ const renderPdf = async (
         i +
         outputs[outputs.length - 1];
       await writeFile(outputi, pdfBytes);
+
+      // Reset
+      newDoc = await PDFDocument.create();
+      cachedFonts = {};
     }
   }
 
