@@ -10,8 +10,8 @@ import { StandardFonts, StandardFontValues } from 'pdf-lib';
 import { Textbox } from 'fabric/fabric-impl';
 import { TwitterPicker } from 'react-color';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { SizeMe } from 'react-sizeme';
 
+import { SizeMe } from 'react-sizeme';
 import { FabricJSCanvas, useFabricJSEditor } from '../fabric/Canvas';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
@@ -32,9 +32,6 @@ const PdfEditor = () => {
   const [opening, setOpening] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [showCanvas, setShowCanvas] = useState(false);
-
-  const [canvasW, setCanvasW] = useState(0);
-  const [canvasH, setCanvasH] = useState(0);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -58,8 +55,7 @@ const PdfEditor = () => {
       pdfFile,
       pageNumber,
       canvasData: editor?.dump(),
-      width: canvasW,
-      height: canvasH,
+      width: parentRef.current?.clientWidth,
     });
   };
 
@@ -69,9 +65,7 @@ const PdfEditor = () => {
     setLoaded(true);
   };
 
-  const handlePageLoadSuccess = (doc: { width: number; height: number }) => {
-    setCanvasH(doc.height);
-    setCanvasW(doc.width);
+  const handlePageLoadSuccess = () => {
     setShowCanvas(true);
   };
 
@@ -98,18 +92,15 @@ const PdfEditor = () => {
   const headings = [
     {
       index: 0,
-      label:
-        'Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long ',
+      label: 'Heading 1 with long Heading 1 with long Heading 1',
     },
     {
       index: 1,
-      label:
-        'Heading 2Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long ',
+      label: 'Heading 2Heading 1 with long Heading 1',
     },
     {
       index: 2,
-      label:
-        'Heading 3Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long Heading 1 with long ',
+      label: 'Heading 3Heading',
     },
   ];
 
@@ -126,6 +117,7 @@ const PdfEditor = () => {
       fontSize,
       fill,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fontFamily, fontSize, fill]);
 
   useEffect(() => {
@@ -151,7 +143,7 @@ const PdfEditor = () => {
           {headings.map(({ index, label }) => (
             <li
               key={index}
-              className={`p-3 border flex items-center space-x-2 border-gray-500 rounded bg-gray-50 ${
+              className={`p-3 border items-center w-full flex space-x-2 border-gray-500 rounded bg-gray-50 ${
                 pdfFile ? 'cursor-pointer' : 'cursor-not-allowed'
               }`}
               onDragStart={(e) => {
@@ -261,7 +253,7 @@ const PdfEditor = () => {
           <p>3 pages</p>
         </section>
 
-        <SizeMe>
+        <SizeMe monitorHeight>
           {({ size }) => (
             <Document
               file={pdfFile}
@@ -274,21 +266,24 @@ const PdfEditor = () => {
               onLoadError={handleDocumentError}
               onSourceError={handleDocumentError}
             >
-              <div ref={parentRef}>
-                <Page
-                  pageNumber={pageNumber}
-                  onLoadSuccess={handlePageLoadSuccess}
-                  width={size.width || 500}
-                />
-              </div>
+              <Page
+                pageNumber={pageNumber}
+                onLoadSuccess={handlePageLoadSuccess}
+                width={size.width || 500}
+              />
 
               {showCanvas && (
                 <FabricJSCanvas
-                  className="absolute w-full border border-gray-300"
+                  className="absolute border-4 border-blue-600"
                   onReady={onReady}
                   onDrop={handleDrop}
                   canvasRef={canvasRef}
                   parentRef={parentRef}
+                  style={{
+                    width: size.width || 500,
+                    height: size.height || 500,
+                  }}
+                  onSize={() => window.dispatchEvent(new Event('resize'))}
                 />
               )}
             </Document>

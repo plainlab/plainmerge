@@ -1,7 +1,6 @@
 import { Rect, Textbox } from 'fabric/fabric-impl';
 import {
   PDFDocument,
-  degrees,
   StandardFonts,
   PDFFont,
   rgb,
@@ -83,10 +82,7 @@ const renderPdf = async (
 
       const x = (o.left || 0) * ratio + 1;
       const y =
-        height * ratio -
-        (o.top || 0) * ratio -
-        (o.height || 0) * ratio +
-        offset;
+        height - (o.top || 0) * ratio - (o.height || 0) * ratio + offset;
 
       const multiText = layoutMultilineText(o.text || '', {
         alignment: TextAlignment.Left,

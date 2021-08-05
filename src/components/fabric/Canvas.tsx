@@ -3,9 +3,9 @@ import React, {
   DragEventHandler,
   RefObject,
   useEffect,
-  useRef,
 } from 'react';
 import { fabric } from 'fabric';
+import { withSize } from 'react-sizeme';
 
 import { useFabricJSEditor } from './editor';
 
@@ -18,7 +18,7 @@ export interface Props {
   parentRef: RefObject<HTMLDivElement>;
 }
 
-const FabricJSCanvas = ({
+const FabricJSCanvasWithoutSize = ({
   className,
   onReady,
   onDrop,
@@ -52,10 +52,12 @@ const FabricJSCanvas = ({
   }, []);
 
   return (
-    <div className={className} style={style} onDrop={onDrop}>
+    <div className={className} ref={parentRef} style={style} onDrop={onDrop}>
       <canvas ref={canvasRef} />
     </div>
   );
 };
+
+const FabricJSCanvas = withSize()(FabricJSCanvasWithoutSize);
 
 export { FabricJSCanvas, useFabricJSEditor };
