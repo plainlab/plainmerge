@@ -5,14 +5,14 @@
 ## Features
 
 - Custom PDF template
-- Support Excel, CSV
+- Support `.xlsx`, `.xls`, `.ods` Excel files
 - Work offline
 - Cross-platform
 
 ## Demo
 
-Comming soon...
+![Demo](./.erb/assets/demo.png)
 
 ## Download
 
-Comming soon...
+https://github.com/plainlab/plainmerge/releases

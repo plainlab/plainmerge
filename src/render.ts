@@ -206,7 +206,10 @@ const renderPdf = async (
   if (combinePdf) {
     const pdfBytes = await newDoc.save();
     await writeFile(output, pdfBytes);
+    return 1;
   }
+
+  return rows.length;
 };
 
 export default renderPdf;

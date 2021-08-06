@@ -11,19 +11,19 @@ const allRoutes = [
   {
     icon: <FontAwesomeIcon icon="home" />,
     path: '/detail/:id',
-    name: 'Detail',
+    name: 'Mail merge detail',
     Component: MergeDetail,
   },
   {
     icon: <FontAwesomeIcon icon="home" />,
     path: '/list',
-    name: 'Home',
+    name: 'Mail merge list',
     Component: MergeList,
   },
   {
     icon: <FontAwesomeIcon icon="plus" />,
     path: '/new',
-    name: 'New',
+    name: 'New mail merge',
     Component: MergeNew,
   },
 ];

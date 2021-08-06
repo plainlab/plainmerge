@@ -18,6 +18,7 @@ import {
   globalShortcut,
   ipcMain,
   shell,
+  Notification,
 } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
@@ -210,15 +211,31 @@ ipcMain.handle(
       canvasWidth
     );
 
-    await renderPdf(
-      file.filePath,
-      pdfFile,
-      pageNumber - 1,
-      excelFile,
-      combinePdf,
-      canvasData,
-      canvasWidth
-    );
+    try {
+      const created = await renderPdf(
+        file.filePath,
+        pdfFile,
+        pageNumber - 1,
+        excelFile,
+        combinePdf,
+        canvasData,
+        canvasWidth
+      );
+
+      if (created > 0 && Notification.isSupported()) {
+        new Notification({
+          title: 'Mail merged successfully',
+          body: `Created ${created} merged file${created === 1 ? '' : 's'}`,
+        }).show();
+      }
+    } catch (e) {
+      if (Notification.isSupported()) {
+        new Notification({
+          title: 'Mail merged failed',
+          body: 'Check your Excel and PDF files again',
+        }).show();
+      }
+    }
   }
 );
 

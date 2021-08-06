@@ -2,7 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { DragEventHandler, useEffect, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf/dist/esm/entry.webpack';
-import { ipcRenderer } from 'electron';
+import { ipcRenderer, Notification } from 'electron';
 // eslint-disable-next-line
 // @ts-ignore
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
@@ -11,8 +11,8 @@ import XLSX from 'xlsx';
 import { Textbox } from 'fabric/fabric-impl';
 import { TwitterPicker } from 'react-color';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-
 import { SizeMe } from 'react-sizeme';
+
 import { FabricJSCanvas, useFabricJSEditor } from '../fabric/Canvas';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
@@ -99,7 +99,7 @@ const PdfEditor = () => {
   };
 
   const handleSave = async () => {
-    ipcRenderer.invoke('render-pdf', {
+    await ipcRenderer.invoke('render-pdf', {
       pdfFile,
       pageNumber,
       excelFile,
@@ -167,35 +167,43 @@ const PdfEditor = () => {
 
   return (
     <div className="flex flex-1">
-      <section className="flex-shrink-0 p-4 space-y-4 bg-gray-200 w-60">
-        <button
-          type="button"
-          className="btn"
-          onClick={handleOpenExcel}
-          disabled={openingExcel}
-        >
-          Choose Excel...
-        </button>
+      <section className="flex flex-col flex-shrink-0 p-4 space-y-4 bg-gray-200 w-60">
+        <span>
+          <button
+            type="button"
+            className="btn"
+            onClick={handleOpenExcel}
+            disabled={openingExcel}
+          >
+            Choose Excel...
+          </button>
+        </span>
 
-        <ul className="flex flex-col items-center justify-start space-y-2">
-          {headers.map(({ index, label }) => (
-            <li
-              key={index}
-              className={`p-3 border items-center w-full flex space-x-2 border-gray-500 rounded bg-gray-50 ${
-                pdfFile ? 'cursor-pointer' : 'cursor-not-allowed'
-              }`}
-              onDragStart={(e) => {
-                e.dataTransfer.setData('Text', label);
-                e.dataTransfer.setData('Index', String(index));
-              }}
-              onClick={() => handleClickAddText(label)}
-              draggable
-            >
-              <FontAwesomeIcon icon="plus" className="text-gray-500" />
-              <span>{label}</span>
-            </li>
-          ))}
-        </ul>
+        {excelFile ? (
+          <ul className="flex flex-col items-center justify-start space-y-2">
+            {headers.map(({ index, label }) => (
+              <li
+                key={index}
+                className={`p-2 border items-center w-full flex space-x-2 border-gray-300 rounded bg-gray-50 ${
+                  pdfFile ? 'cursor-pointer' : 'cursor-not-allowed'
+                }`}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('Text', label);
+                  e.dataTransfer.setData('Index', String(index));
+                }}
+                onClick={() => handleClickAddText(label)}
+                draggable
+              >
+                <FontAwesomeIcon icon="plus" className="text-gray-400" />
+                <span>{label}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="flex items-center justify-between flex-1">
+            <p className="flex-1 text-center">No Excel file specified.</p>
+          </div>
+        )}
       </section>
 
       <section className="flex flex-col flex-1 p-4 space-y-4 bg-gray-100">
@@ -208,7 +216,12 @@ const PdfEditor = () => {
           >
             Choose PDF...
           </button>
-          <button type="button" className="btn" onClick={handleSave}>
+          <button
+            type="button"
+            className="btn"
+            onClick={handleSave}
+            disabled={!pdfFile || !excelFile}
+          >
             Mail merge...
           </button>
         </span>
@@ -217,7 +230,7 @@ const PdfEditor = () => {
           <section className="flex items-center justify-between">
             <section
               className={`relative flex space-x-4 ${
-                selectedObject ? '' : 'opacity-30 cursor-default'
+                selectedObject ? '' : 'opacity-50 cursor-default'
               }`}
             >
               <select
