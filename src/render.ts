@@ -130,9 +130,15 @@ const renderPage = async (
       const y =
         height - (o.top || 0) * ratio - (o.height || 0) * ratio + offset;
 
+      let alignment = TextAlignment.Left;
+      if (o.textAlign === 'right') {
+        alignment = TextAlignment.Right;
+      } else if (o.textAlign === 'center') {
+        alignment = TextAlignment.Center;
+      }
+
       const text = row[o.index];
       const multiText = layoutMultilineText(text || '', {
-        alignment: TextAlignment.Left,
         font,
         fontSize: size,
         bounds: {
@@ -141,6 +147,7 @@ const renderPage = async (
           width: (o.width || 100) * ratio,
           height: (o.height || 100) * ratio,
         },
+        alignment,
       });
 
       multiText.lines.forEach((p) => {

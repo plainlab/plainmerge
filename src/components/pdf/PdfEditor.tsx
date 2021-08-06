@@ -13,6 +13,7 @@ import { TwitterPicker } from 'react-color';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { SizeMe } from 'react-sizeme';
 
+import { IconName } from '@fortawesome/fontawesome-svg-core';
 import { FabricJSCanvas, useFabricJSEditor } from '../fabric/Canvas';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
@@ -21,6 +22,8 @@ interface Header {
   index: number;
   label: string;
 }
+
+type Align = 'left' | 'center' | 'right';
 
 const PdfEditor = () => {
   const { editor, onReady, selectedObject } = useFabricJSEditor();
@@ -31,6 +34,7 @@ const PdfEditor = () => {
   const [fontSize, setFontSize] = useState(16);
   const [fill, setFill] = useState('#000');
   const [showPicker, setShowPicker] = useState(false);
+  const [align, setAlign] = useState<Align>('left');
 
   const [pdfFile, setPdfFile] = useState('');
   const [excelFile, setExcelFile] = useState('');
@@ -154,15 +158,17 @@ const PdfEditor = () => {
       fontFamily,
       fontSize,
       fill,
+      textAlign: align as string,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fontFamily, fontSize, fill]);
+  }, [fontFamily, fontSize, fill, align]);
 
   useEffect(() => {
     const text = selectedObject as Textbox;
     setFontFamily(text?.fontFamily || 'Helvetica');
     setFontSize(text?.fontSize || 16);
     setFill((text?.fill as string) || '#000');
+    setAlign((text?.textAlign as Align) || 'left');
   }, [selectedObject]);
 
   return (
@@ -245,8 +251,9 @@ const PdfEditor = () => {
                   </option>
                 ))}
               </select>
+
               <select
-                className="rounded-sm outline-none active:outline-none focus:ring-2 focus:outline-none focus:ring-blue-500"
+                className="w-10 rounded-sm outline-none active:outline-none focus:ring-2 focus:outline-none focus:ring-blue-500"
                 onChange={(e) =>
                   setFontSize(parseInt(e.target.value, 10) || 16)
                 }
@@ -259,6 +266,24 @@ const PdfEditor = () => {
                   </option>
                 ))}
               </select>
+
+              <section className="flex items-center justify-center border-t border-b rounded-sm">
+                {['left', 'center', 'right'].map((al) => (
+                  <button
+                    type="button"
+                    key={al}
+                    className={`outline-none focus:outline-none w-10 h-7 ${
+                      align === (al as Align) ? 'bg-gray-300' : ''
+                    }`}
+                    onClick={() => setAlign(al as Align)}
+                  >
+                    <FontAwesomeIcon
+                      icon={['fas', `align-${al}` as IconName]}
+                    />
+                  </button>
+                ))}
+              </section>
+
               <div
                 className="p-2 border-2 border-white rounded shadow outline-none w-7 h-7 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 style={{ backgroundColor: fill }}

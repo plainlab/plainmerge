@@ -100,7 +100,7 @@ const useFabricJSEditor = () => {
         const obj = e.target;
         const h = obj.height * obj.scaleY;
         obj.set({
-          height: h || obj.height,
+          height: h,
           scaleY: 1,
         });
       });

@@ -16,3 +16,7 @@
 ## Download
 
 https://github.com/plainlab/plainmerge/releases
+
+---
+
+&copy; 2021 PlainLab
