@@ -142,8 +142,8 @@ const PdfEditor = () => {
     e.stopPropagation();
   };
 
-  const handleClickAddText = (text: string) => {
-    editor?.addText(text, { top: 100, left: 100 });
+  const handleClickAddText = (text: string, index: number) => {
+    editor?.addText(text, { top: 100, left: 100, data: { index } });
   };
 
   const fonts = StandardFontValues.map((value) => ({
@@ -197,7 +197,7 @@ const PdfEditor = () => {
                   e.dataTransfer.setData('Text', label);
                   e.dataTransfer.setData('Index', String(index));
                 }}
-                onClick={() => handleClickAddText(label)}
+                onClick={() => handleClickAddText(label, index)}
                 draggable
               >
                 <FontAwesomeIcon icon="plus" className="text-gray-400" />
