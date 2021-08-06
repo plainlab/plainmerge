@@ -2,7 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { DragEventHandler, useEffect, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf/dist/esm/entry.webpack';
-import { ipcRenderer, Notification } from 'electron';
+import { ipcRenderer } from 'electron';
 // eslint-disable-next-line
 // @ts-ignore
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
