@@ -158,7 +158,7 @@ export default merge(baseConfig, {
     new webpack.EnvironmentPlugin({
       NODE_ENV: 'production',
       DEBUG_PROD: false,
-      PAID: process.env.PAID,
+      PAID: process.env.PAID || false,
     }),
 
     new MiniCssExtractPlugin({
