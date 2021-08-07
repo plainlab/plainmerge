@@ -16,8 +16,6 @@ import XLSX from 'xlsx';
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 
-const SheetRowsLimit = 100;
-
 interface MyTextbox extends Textbox {
   index: number;
 }
@@ -81,12 +79,15 @@ const sheetToArray = (sheet: XLSX.WorkSheet) => {
   return result;
 };
 
-const readFirstSheet = (path: string) => {
-  const workbook = XLSX.readFile(path, { sheetRows: SheetRowsLimit });
+const readFirstSheet = (path: string, rowsLimit: number) => {
+  const headerOffset = 1;
+  const sheetRows = rowsLimit + headerOffset;
+
+  const workbook = XLSX.readFile(path, { sheetRows });
   const sheetsList = workbook.SheetNames;
   const firstSheet = workbook.Sheets[sheetsList[0]];
   const rows = sheetToArray(firstSheet)
-    .slice(1) // Skip header
+    .slice(headerOffset) // Skip header
     .map((arr) => {
       const row: RowMap = {};
       arr.forEach((r, i) => {
@@ -137,7 +138,7 @@ const renderPage = async (
         alignment = TextAlignment.Center;
       }
 
-      const text = row[o.index];
+      const text = String(row[o.index]);
       const multiText = layoutMultilineText(text || '', {
         font,
         fontSize: size,
@@ -172,17 +173,29 @@ const renderPdf = async (
   pdfFile: string,
   pageIndex: number,
   excelFile: string,
+  rowsLimit: number,
   combinePdf: boolean,
   canvasData: CanvasObjects,
   canvasWidth: number
 ) => {
+  console.log(
+    'Render pdf',
+    pdfFile,
+    pageIndex,
+    excelFile,
+    rowsLimit,
+    combinePdf,
+    canvasData,
+    canvasWidth
+  );
+
   const pdfBuff = await readFile(pdfFile);
   const pdfDoc = await PDFDocument.load(pdfBuff);
 
   let newDoc = await PDFDocument.create();
   let cachedFonts: FontMap = {};
 
-  const rows: RowMap[] = readFirstSheet(excelFile);
+  const rows: RowMap[] = readFirstSheet(excelFile, rowsLimit);
   for (let i = 0; i < rows.length; i += 1) {
     const [page] = await newDoc.copyPages(pdfDoc, [pageIndex]);
     await renderPage(

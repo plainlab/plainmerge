@@ -24,12 +24,15 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { FileFilter, IpcMainInvokeEvent } from 'electron/main';
 import fs from 'fs';
+import nodeurl from 'url';
 import { promisify } from 'util';
 import MenuBuilder from './menu';
 import renderPdf, { RenderPdf } from './render';
 
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
+
+const SheetRowsLimit = 100;
 
 const Store = require('electron-store');
 
@@ -182,62 +185,97 @@ ipcMain.handle('get-store', (_event, { key }) => {
   return store.get(key);
 });
 
-ipcMain.handle(
-  'render-pdf',
-  async (
-    _event,
-    {
+const openPdf = (pdfPath: string) => {
+  const win = new BrowserWindow({
+    title: 'Preview',
+    width: 512,
+    height: 768,
+    webPreferences: {
+      plugins: true,
+      contextIsolation: false,
+    },
+  });
+  win.loadURL(nodeurl.pathToFileURL(pdfPath).toString());
+};
+
+ipcMain.handle('preview-pdf', async (_event, params: RenderPdf) => {
+  const {
+    pdfFile,
+    pageNumber,
+    excelFile,
+    combinePdf,
+    canvasData,
+    canvasWidth,
+  } = params;
+
+  try {
+    const filePath = path.join(app.getPath('temp'), 'plainmerge-preview.pdf');
+    await renderPdf(
+      filePath,
       pdfFile,
-      pageNumber,
+      pageNumber - 1,
       excelFile,
+      1,
       combinePdf,
       canvasData,
-      canvasWidth,
-    }: RenderPdf
-  ) => {
-    const file = await dialog.showSaveDialog({
-      filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
-    });
+      canvasWidth
+    );
+    openPdf(filePath);
+  } catch (e) {
+    console.error(e);
+    if (Notification.isSupported()) {
+      new Notification({
+        title: 'Mail merge preview failed',
+        body: 'Check your Excel and PDF files again',
+      }).show();
+    }
+  }
+});
 
-    if (!file || !file.filePath) return;
+ipcMain.handle('save-pdf', async (_event, params: RenderPdf) => {
+  const {
+    pdfFile,
+    pageNumber,
+    excelFile,
+    combinePdf,
+    canvasData,
+    canvasWidth,
+  } = params;
 
-    console.log(
-      'Render pdf',
+  const file = await dialog.showSaveDialog({
+    filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
+  });
+
+  if (!file || !file.filePath) return;
+
+  try {
+    const created = await renderPdf(
+      file.filePath,
       pdfFile,
-      pageNumber,
+      pageNumber - 1,
       excelFile,
+      SheetRowsLimit,
       combinePdf,
       canvasData,
       canvasWidth
     );
 
-    try {
-      const created = await renderPdf(
-        file.filePath,
-        pdfFile,
-        pageNumber - 1,
-        excelFile,
-        combinePdf,
-        canvasData,
-        canvasWidth
-      );
-
-      if (created > 0 && Notification.isSupported()) {
-        new Notification({
-          title: 'Mail merged successfully',
-          body: `Created ${created} merged file${created === 1 ? '' : 's'}`,
-        }).show();
-      }
-    } catch (e) {
-      if (Notification.isSupported()) {
-        new Notification({
-          title: 'Mail merged failed',
-          body: 'Check your Excel and PDF files again',
-        }).show();
-      }
+    if (created > 0 && Notification.isSupported()) {
+      new Notification({
+        title: 'Mail merged successfully',
+        body: `Created ${created} merged file${created === 1 ? '' : 's'}`,
+      }).show();
+    }
+  } catch (e) {
+    console.error(e);
+    if (Notification.isSupported()) {
+      new Notification({
+        title: 'Mail merged failed',
+        body: 'Check your Excel and PDF files again',
+      }).show();
     }
   }
-);
+});
 
 /**
  * Add event listeners...

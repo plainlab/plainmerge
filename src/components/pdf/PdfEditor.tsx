@@ -102,8 +102,8 @@ const PdfEditor = () => {
     }
   };
 
-  const handleSave = async () => {
-    await ipcRenderer.invoke('render-pdf', {
+  const handleRender = async (action: string) => {
+    await ipcRenderer.invoke(action, {
       pdfFile,
       pageNumber,
       excelFile,
@@ -111,6 +111,14 @@ const PdfEditor = () => {
       canvasData: editor?.dump(),
       canvasWidth: parentRef.current?.clientWidth,
     });
+  };
+
+  const handleSave = async () => {
+    await handleRender('save-pdf');
+  };
+
+  const handlePreview = async () => {
+    await handleRender('preview-pdf');
   };
 
   const handleDocumentLoadSuccess = (doc: { numPages: number }) => {
@@ -222,14 +230,24 @@ const PdfEditor = () => {
           >
             Choose PDF...
           </button>
-          <button
-            type="button"
-            className="btn"
-            onClick={handleSave}
-            disabled={!pdfFile || !excelFile}
-          >
-            Mail merge...
-          </button>
+          <section className="flex items-center justify-between space-x-2">
+            <button
+              type="button"
+              className="btn"
+              onClick={handlePreview}
+              disabled={!pdfFile || !excelFile}
+            >
+              Preview
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={handleSave}
+              disabled={!pdfFile || !excelFile}
+            >
+              Mail merge...
+            </button>
+          </section>
         </span>
 
         {pdfFile ? (
