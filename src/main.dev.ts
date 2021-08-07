@@ -32,7 +32,12 @@ import renderPdf, { RenderPdf } from './render';
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 
-const SheetRowsLimit = 100;
+const getRowsLimit = () => {
+  if (process.env.PAID) {
+    return 10_000;
+  }
+  return 10;
+};
 
 const Store = require('electron-store');
 
@@ -254,7 +259,7 @@ ipcMain.handle('save-pdf', async (_event, params: RenderPdf) => {
       pdfFile,
       pageNumber - 1,
       excelFile,
-      SheetRowsLimit,
+      getRowsLimit(),
       combinePdf,
       canvasData,
       canvasWidth

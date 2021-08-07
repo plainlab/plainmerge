@@ -97,7 +97,11 @@ const PdfEditor = () => {
       if (firstSheet['!fullref']) {
         const range = XLSX.utils.decode_range(firstSheet['!fullref']);
         const rows = range.e.r - range.s.r;
-        setPages(rows);
+        let rowLimit = 10;
+        if (process.env.PAID) {
+          rowLimit = 10_000;
+        }
+        setPages(Math.min(rows, rowLimit));
       }
     }
   };
@@ -182,7 +186,7 @@ const PdfEditor = () => {
   return (
     <div className="flex flex-1">
       <section className="flex flex-col flex-shrink-0 p-4 space-y-4 bg-gray-200 w-60">
-        <span>
+        <span className="flex items-center justify-between">
           <button
             type="button"
             className="btn"
@@ -214,13 +218,11 @@ const PdfEditor = () => {
             ))}
           </ul>
         ) : (
-          <div className="flex items-center justify-between flex-1">
-            <p className="flex-1 text-center">No Excel file specified.</p>
-          </div>
+          <p className="flex-1 text-center">No Excel file specified.</p>
         )}
       </section>
 
-      <section className="flex flex-col flex-1 p-4 space-y-4 bg-gray-100">
+      <section className="flex flex-col justify-start flex-1 p-4 space-y-4 bg-gray-100">
         <span className="flex justify-between">
           <button
             type="button"
@@ -231,6 +233,9 @@ const PdfEditor = () => {
             Choose PDF...
           </button>
           <section className="flex items-center justify-between space-x-2">
+            {process.env.PAID ? null : (
+              <p className="text-red-500">Trial limit: 10 pages</p>
+            )}
             <button
               type="button"
               className="btn"
@@ -375,42 +380,45 @@ const PdfEditor = () => {
           </section>
         ) : null}
 
-        <SizeMe monitorHeight>
-          {({ size }) => (
-            <Document
-              file={pdfFile}
-              onLoadSuccess={handleDocumentLoadSuccess}
-              className="flex items-center justify-center flex-1"
-              options={{
-                cMapUrl: 'cmaps/',
-                cMapPacked: true,
-              }}
-              onLoadError={handleDocumentError}
-              onSourceError={handleDocumentError}
-            >
-              <Page
-                pageNumber={pageNumber}
-                onLoadSuccess={handlePageLoadSuccess}
-                width={size.width || 500}
-              />
-
-              {showCanvas && (
-                <FabricJSCanvas
-                  className="absolute"
-                  onReady={onReady}
-                  onDrop={handleDrop}
-                  canvasRef={canvasRef}
-                  parentRef={parentRef}
-                  style={{
-                    width: size.width || 500,
-                    height: size.height || 500,
-                  }}
-                  onSize={() => window.dispatchEvent(new Event('resize'))}
+        <Document
+          file={pdfFile}
+          onLoadSuccess={handleDocumentLoadSuccess}
+          className="relative flex items-start justify-center flex-1"
+          options={{
+            cMapUrl: 'cmaps/',
+            cMapPacked: true,
+          }}
+          onLoadError={handleDocumentError}
+          onSourceError={handleDocumentError}
+        >
+          <SizeMe monitorHeight>
+            {({ size }) => (
+              <>
+                <Page
+                  pageNumber={pageNumber}
+                  onLoadSuccess={handlePageLoadSuccess}
+                  width={size.width || 500}
+                  className="flex-1"
                 />
-              )}
-            </Document>
-          )}
-        </SizeMe>
+
+                {showCanvas && (
+                  <FabricJSCanvas
+                    className="absolute"
+                    onReady={onReady}
+                    onDrop={handleDrop}
+                    canvasRef={canvasRef}
+                    parentRef={parentRef}
+                    style={{
+                      width: size.width || 500,
+                      height: size.height || 500,
+                    }}
+                    onSize={() => window.dispatchEvent(new Event('resize'))}
+                  />
+                )}
+              </>
+            )}
+          </SizeMe>
+        </Document>
 
         {loaded && (
           <div className="flex items-center justify-between">
