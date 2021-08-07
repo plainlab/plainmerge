@@ -1,7 +1,9 @@
 [![Test](https://github.com/plainlab/plainmerge/actions/workflows/test.yml/badge.svg)](https://github.com/plainlab/plainmerge/actions/workflows/test.yml)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/plainlab/plainmerge)
 
-> A plain PDF mail merger
+# PlainMerge
+
+> An offline PDF mail merger
 
 ![PlainMerge](./.erb/assets/plainmerge.png)
 
@@ -16,13 +18,13 @@
 
 ![Demo](./.erb/assets/demo.png)
 
-## Try (Limit export pages)
+## Try
 
-https://github.com/plainlab/plainmerge/releases
+For Windows, MacOS & Linux: https://github.com/plainlab/plainmerge/releases
 
-## Buy (Windows & MacOS)
+## Buy
 
-https://plainlab.gumroad.com/l/plainmerge
+For Windows & MacOS: https://plainlab.gumroad.com/l/plainmerge
 
 ---
 
