@@ -25,6 +25,13 @@ interface Header {
 
 type Align = 'left' | 'center' | 'right';
 
+const getRowsLimit = () => {
+  if (process.env.PAID) {
+    return 100_000;
+  }
+  return 10;
+};
+
 const PdfEditor = () => {
   const { editor, onReady, selectedObject } = useFabricJSEditor();
 
@@ -97,10 +104,7 @@ const PdfEditor = () => {
       if (firstSheet['!fullref']) {
         const range = XLSX.utils.decode_range(firstSheet['!fullref']);
         const rows = range.e.r - range.s.r;
-        let rowLimit = 10;
-        if (process.env.PAID) {
-          rowLimit = 10_000;
-        }
+        const rowLimit = getRowsLimit();
         setPages(Math.min(rows, rowLimit));
       }
     }
@@ -164,6 +168,39 @@ const PdfEditor = () => {
   }));
 
   const fontSizes = [8, 10, 12, 14, 16, 18, 24, 30, 36, 48, 60];
+
+  const handleKeyDown = (key: string) => {
+    if (selectedObject) {
+      switch (key) {
+        case 'ArrowDown':
+          editor?.updateText({
+            top: (selectedObject.top || 1) + 1,
+          });
+          break;
+        case 'ArrowUp':
+          editor?.updateText({
+            top: (selectedObject.top || 1) - 1,
+          });
+          break;
+        case 'ArrowLeft':
+          editor?.updateText({
+            left: (selectedObject.left || 1) - 1,
+          });
+          break;
+        case 'ArrowRight':
+          editor?.updateText({
+            left: (selectedObject.left || 1) + 1,
+          });
+          break;
+        default:
+          break;
+      }
+    }
+  };
+
+  ipcRenderer.on('keydown', (_event, key) => {
+    handleKeyDown(key);
+  });
 
   useEffect(() => {
     editor?.updateText({

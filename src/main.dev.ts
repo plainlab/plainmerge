@@ -34,7 +34,7 @@ const readFile = promisify(fs.readFile);
 
 const getRowsLimit = () => {
   if (process.env.PAID) {
-    return 10_000;
+    return 100_000;
   }
   return 10;
 };
@@ -120,6 +120,17 @@ const createWindow = async () => {
       mainWindow.show();
       mainWindow.focus();
     }
+  });
+
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    console.log(event, input);
+    if (
+      ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(input.key) >
+      -1
+    ) {
+      event.preventDefault();
+    }
+    mainWindow?.webContents.send('keydown', input.key);
   });
 
   mainWindow.on('closed', () => {
