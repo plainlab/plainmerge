@@ -211,11 +211,12 @@ const renderPdf = async (
     if (!combinePdf) {
       const pdfBytes = await newDoc.save();
       const outputs = output.split('.');
-      const outputi =
-        outputs.slice(0, outputs.length - 1).join('.') +
-        i +
-        outputs[outputs.length - 1];
-      await writeFile(outputi, pdfBytes);
+
+      const baseName = outputs.slice(0, outputs.length - 1).join('.');
+      const fileEx = outputs[outputs.length - 1];
+      const outputName = `${baseName}-${i + 1}.${fileEx}`;
+
+      await writeFile(outputName, pdfBytes);
 
       // Reset
       newDoc = await PDFDocument.create();

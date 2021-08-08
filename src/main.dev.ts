@@ -123,7 +123,6 @@ const createWindow = async () => {
   });
 
   mainWindow.webContents.on('before-input-event', (event, input) => {
-    console.log(event, input);
     if (
       ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(input.key) >
       -1
