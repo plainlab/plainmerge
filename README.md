@@ -20,11 +20,11 @@
 
 ## Try
 
-For Windows, MacOS & Linux: https://github.com/plainlab/plainmerge/releases
+For Windows, macOS & Linux: https://github.com/plainlab/plainmerge/releases
 
 ## Buy
 
-For Windows & MacOS: https://plainlab.gumroad.com/l/plainmerge
+For Windows & macOS: https://plainlab.gumroad.com/l/plainmerge
 
 ---
 
