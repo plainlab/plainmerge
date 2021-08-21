@@ -178,17 +178,6 @@ const renderPdf = async (
   canvasData: CanvasObjects,
   canvasWidth: number
 ) => {
-  console.log(
-    'Render pdf',
-    pdfFile,
-    pageIndex,
-    excelFile,
-    rowsLimit,
-    combinePdf,
-    canvasData,
-    canvasWidth
-  );
-
   const pdfBuff = await readFile(pdfFile);
   const pdfDoc = await PDFDocument.load(pdfBuff);
 

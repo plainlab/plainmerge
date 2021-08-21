@@ -6,14 +6,14 @@ import {
   faAlignLeft,
   faAlignRight,
   faEllipsisV,
-  faHome,
+  faList,
   faPlus,
 } from '@fortawesome/free-solid-svg-icons';
 
 library.add(
   fab,
   faFilePdf,
-  faHome,
+  faList,
   faPlus,
   faEllipsisV,
   faTrashAlt,

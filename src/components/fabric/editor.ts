@@ -48,6 +48,7 @@ const buildEditor = (canvas: fabric.Canvas): FabricJSEditor => {
           o.data = { index: data.objects[i].index };
         }
       });
+      canvas.renderAll();
     },
     addText: (text: string, extraOptions?: ITextboxOptions) => {
       const object = new fabric.Textbox(text, {

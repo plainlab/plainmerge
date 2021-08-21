@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { DragEventHandler, useEffect, useRef, useState } from 'react';
@@ -8,10 +9,11 @@ import { ipcRenderer } from 'electron';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
 import { StandardFonts, StandardFontValues } from 'pdf-lib';
 import XLSX from 'xlsx';
-import { Textbox } from 'fabric/fabric-impl';
+import { Rect, Textbox } from 'fabric/fabric-impl';
 import { TwitterPicker } from 'react-color';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { SizeMe } from 'react-sizeme';
+import { useLocation } from 'react-router-dom';
 
 import { IconName } from '@fortawesome/fontawesome-svg-core';
 import { FabricJSCanvas, useFabricJSEditor } from '../fabric/Canvas';
@@ -25,6 +27,21 @@ interface Header {
 
 type Align = 'left' | 'center' | 'right';
 
+interface MyTextbox extends Textbox {
+  index: number;
+}
+export interface CanvasObjects {
+  objects: [MyTextbox | Rect];
+}
+export interface RenderPdf {
+  pdfFile: string;
+  excelFile: string;
+  combinePdf: boolean;
+  pageNumber: number;
+  canvasData: CanvasObjects;
+  canvasWidth: number;
+}
+
 const getRowsLimit = () => {
   if (process.env.PAID) {
     return 100_000;
@@ -33,6 +50,8 @@ const getRowsLimit = () => {
 };
 
 const PdfEditor = () => {
+  const { state } = useLocation<RenderPdf>();
+
   const { editor, onReady, selectedObject } = useFabricJSEditor();
 
   const [fontFamily, setFontFamily] = useState(
@@ -60,6 +79,32 @@ const PdfEditor = () => {
   const [headers, setHeaders] = useState<Header[]>([]);
   const [combinePdf, setCombinePdf] = useState(true);
 
+  const loadExcelFile = async (fp: string) => {
+    // Read headers
+    const workbook = XLSX.readFile(fp, { sheetRows: 1 });
+    const sheetsList = workbook.SheetNames;
+    const firstSheet = workbook.Sheets[sheetsList[0]];
+    const sheetData = XLSX.utils.sheet_to_json(firstSheet, {
+      header: 1,
+      defval: '',
+      blankrows: true,
+    });
+    const labels = sheetData.map((_v, _i, array) => array).flat(2);
+    setHeaders(
+      labels.map((label, index) => ({
+        index,
+        label: label as string,
+      }))
+    );
+
+    if (firstSheet['!fullref']) {
+      const range = XLSX.utils.decode_range(firstSheet['!fullref']);
+      const rows = range.e.r - range.s.r;
+      const rowLimit = getRowsLimit();
+      setPages(Math.min(rows, rowLimit));
+    }
+  };
+
   const handleOpenPdf = async () => {
     setOpeningPdf(true);
     const filters = [{ name: 'PDF Files', extensions: ['pdf'] }];
@@ -84,29 +129,6 @@ const PdfEditor = () => {
 
     if (path) {
       setExcelFile(path);
-      // Read headers
-      const workbook = XLSX.readFile(path, { sheetRows: 1 });
-      const sheetsList = workbook.SheetNames;
-      const firstSheet = workbook.Sheets[sheetsList[0]];
-      const sheetData = XLSX.utils.sheet_to_json(firstSheet, {
-        header: 1,
-        defval: '',
-        blankrows: true,
-      });
-      const labels = sheetData.map((_v, _i, array) => array).flat(2);
-      setHeaders(
-        labels.map((label, index) => ({
-          index,
-          label: label as string,
-        }))
-      );
-
-      if (firstSheet['!fullref']) {
-        const range = XLSX.utils.decode_range(firstSheet['!fullref']);
-        const rows = range.e.r - range.s.r;
-        const rowLimit = getRowsLimit();
-        setPages(Math.min(rows, rowLimit));
-      }
     }
   };
 
@@ -131,7 +153,7 @@ const PdfEditor = () => {
 
   const handleDocumentLoadSuccess = (doc: { numPages: number }) => {
     setNumPages(doc.numPages);
-    setPageNumber(1);
+    setPageNumber((state && state.pageNumber) || 1);
     setLoaded(true);
   };
 
@@ -219,6 +241,33 @@ const PdfEditor = () => {
     setFill((text?.fill as string) || '#000');
     setAlign((text?.textAlign as Align) || 'left');
   }, [selectedObject]);
+
+  useEffect(() => {
+    if (excelFile) {
+      loadExcelFile(excelFile).catch(console.error);
+    }
+  }, [excelFile]);
+
+  useEffect(() => {
+    if (state) {
+      setPdfFile(state.pdfFile);
+
+      // Reset nav & canvas
+      setLoaded(false);
+      setShowCanvas(false);
+
+      setExcelFile(state.excelFile);
+      setCombinePdf(state.combinePdf);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
+
+  useEffect(() => {
+    if (editor && state && state.canvasData) {
+      editor.load(state.canvasData);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor]);
 
   return (
     <div className="flex flex-1">
