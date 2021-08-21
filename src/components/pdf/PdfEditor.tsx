@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
@@ -40,6 +41,7 @@ export interface RenderPdf {
   pageNumber: number;
   canvasData: CanvasObjects;
   canvasWidth: number;
+  formData: Record<string, number>;
 }
 
 const getRowsLimit = () => {
@@ -52,6 +54,7 @@ const getRowsLimit = () => {
 interface FieldType {
   type: string;
   name: string;
+  index: number;
 }
 
 const PdfEditor = () => {
@@ -281,7 +284,14 @@ const PdfEditor = () => {
     if (pdfFile) {
       ipcRenderer
         .invoke('load-form', { filename: pdfFile })
-        .then((fields: FieldType[]) => setFormFields(fields))
+        .then((fields: FieldType[]) =>
+          setFormFields(
+            fields.map((f) => ({
+              ...f,
+              index: (state && state.formData[f.name]) || -1,
+            }))
+          )
+        )
         .catch(console.error);
     }
   }, [pdfFile]);
@@ -386,7 +396,7 @@ const PdfEditor = () => {
           <section className="flex items-center justify-between">
             <section
               className={`relative flex space-x-4 ${
-                selectedObject ? '' : 'opacity-50 cursor-default'
+                selectedObject && !formLayout ? '' : 'opacity-50 cursor-default'
               }`}
             >
               <select
@@ -507,47 +517,86 @@ const PdfEditor = () => {
           </section>
         ) : null}
 
-        <Document
-          file={pdfFile}
-          onLoadSuccess={handleDocumentLoadSuccess}
-          className="relative flex items-start justify-center flex-1"
-          options={{
-            cMapUrl: 'cmaps/',
-            cMapPacked: true,
-          }}
-          onLoadError={handleDocumentError}
-          onSourceError={handleDocumentError}
-        >
-          <SizeMe monitorHeight>
-            {({ size }) => (
-              <>
-                <Page
-                  pageNumber={pageNumber}
-                  onLoadSuccess={handlePageLoadSuccess}
-                  width={size.width || 500}
-                  className="flex-1"
-                />
-
-                {showCanvas && (
-                  <FabricJSCanvas
-                    className="absolute"
-                    onReady={onReady}
-                    onDrop={handleDrop}
-                    canvasRef={canvasRef}
-                    parentRef={parentRef}
-                    style={{
-                      width: size.width || 500,
-                      height: size.height || 500,
-                    }}
-                    onSize={() => window.dispatchEvent(new Event('resize'))}
+        {formLayout ? (
+          <ol className="flex flex-col items-start justify-center py-4 space-y-4">
+            {formFields.map((fld, idx) => (
+              <li
+                key={fld.name}
+                className="flex items-center justify-between w-full py-1 space-x-2 border-b border-gray-200 border-dashed"
+              >
+                <p className="flex items-center justify-start flex-1 space-x-2 truncate">
+                  <span className="opacity-70">{idx + 1}.</span>
+                  <span className="font-medium">{fld.name}</span>
+                  <span className="text-xs opacity-70">
+                    ({fld.type.slice(3)})
+                  </span>
+                  :
+                </p>
+                <select
+                  className="flex-shrink-0 rounded-sm outline-none bg-gray-50 active:outline-none focus:ring-2 focus:outline-none focus:ring-blue-500 h-7"
+                  onChange={(e) =>
+                    setFormFields(
+                      formFields.map((f) =>
+                        f.name === fld.name
+                          ? { ...f, index: parseInt(e.target.value, 10) }
+                          : f
+                      )
+                    )
+                  }
+                  value={fld.index}
+                >
+                  {[{ index: -1, label: '---' }, ...headers].map((h) => (
+                    <option value={h.index} key={h.index}>
+                      {h.label}
+                    </option>
+                  ))}
+                </select>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <Document
+            file={pdfFile}
+            onLoadSuccess={handleDocumentLoadSuccess}
+            className="relative flex items-start justify-center flex-1"
+            options={{
+              cMapUrl: 'cmaps/',
+              cMapPacked: true,
+            }}
+            onLoadError={handleDocumentError}
+            onSourceError={handleDocumentError}
+          >
+            <SizeMe monitorHeight>
+              {({ size }) => (
+                <>
+                  <Page
+                    pageNumber={pageNumber}
+                    onLoadSuccess={handlePageLoadSuccess}
+                    width={size.width || 500}
+                    className="flex-1"
                   />
-                )}
-              </>
-            )}
-          </SizeMe>
-        </Document>
 
-        {loaded && (
+                  {showCanvas && (
+                    <FabricJSCanvas
+                      className="absolute"
+                      onReady={onReady}
+                      onDrop={handleDrop}
+                      canvasRef={canvasRef}
+                      parentRef={parentRef}
+                      style={{
+                        width: size.width || 500,
+                        height: size.height || 500,
+                      }}
+                      onSize={() => window.dispatchEvent(new Event('resize'))}
+                    />
+                  )}
+                </>
+              )}
+            </SizeMe>
+          </Document>
+        )}
+
+        {loaded && !formLayout && (
           <div className="flex items-center justify-between">
             {pageNumber > 1 ? (
               <button
