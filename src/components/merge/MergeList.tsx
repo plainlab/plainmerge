@@ -1,60 +1,68 @@
+/* eslint-disable no-console */
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React from 'react';
+import { ipcRenderer } from 'electron';
+import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { RenderPdf } from '../pdf/PdfEditor';
 
 const MergeList = () => {
-  const merges = [
-    {
-      id: 1,
-      name: 'test 1.pdf',
-    },
-    {
-      id: 2,
-      name:
-        'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsu.pdf',
-    },
-  ];
+  const [merges, setMerges] = useState<RenderPdf[]>([]);
+
+  const loadHistory = () => {
+    ipcRenderer
+      .invoke('load-history')
+      .then((list) => setMerges(list))
+      .catch(console.error);
+  };
+
+  const handleRemove = (filename: string) => {
+    ipcRenderer
+      .invoke('remove-history', { filename })
+      .then(loadHistory)
+      .catch(console.error);
+  };
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
 
   return (
-    <div>
-      <section className="flex items-center justify-end">
-        <a href="/new" className="btn-link">
-          + New merge
-        </a>
-      </section>
-      <ul className="flex flex-col items-center justify-start space-y-8 truncate">
-        {merges.map(({ id, name }) => (
-          <li
-            className="flex items-center justify-start w-full h-24 p-4 space-x-4 border shadow-sm rounded-xl"
-            key={id}
-          >
-            <section className="flex items-center justify-center flex-1 space-x-2 truncate">
-              <NavLink
-                to={`/detail/${id}`}
-                className="flex items-center justify-center w-16 h-16 flex-0"
-              >
-                <FontAwesomeIcon
-                  icon={['far', 'file-pdf']}
-                  className="text-gray-300 w-15 h-15"
-                />
-              </NavLink>
-              <section className="flex-1 block space-y-2 truncate">
-                <NavLink to={`/detail/${id}`} className="text-xl">
-                  {name}
-                </NavLink>
-                <p className="text-xs opacity-70">Created 3 months ago</p>
-              </section>
-            </section>
-            <section className="flex items-center justify-center">
+    <ul className="flex flex-col items-center justify-start flex-1 p-8 space-y-8 truncate bg-gray-50">
+      {merges.map((state) => (
+        <li
+          className="flex items-center justify-start w-full p-4 space-x-4 bg-white border shadow-sm rounded-xl"
+          key={state.pdfFile}
+        >
+          <section className="flex items-center justify-center flex-1 space-x-2 truncate">
+            <NavLink
+              to={{ pathname: '/new', state }}
+              className="flex items-center justify-center flex-shrink-0 w-10"
+            >
               <FontAwesomeIcon
-                icon="ellipsis-v"
-                className="w-5 h-5 text-gray-400"
+                icon={['far', 'file-pdf']}
+                className="flex-1 w-8 h-8 text-red-400 hover:opacity-80"
               />
+            </NavLink>
+
+            <section className="flex-1 block space-y-2 truncate">
+              <NavLink
+                to={{ pathname: '/new', state }}
+                className="text-lg hover:opacity-80"
+              >
+                {state.pdfFile}
+              </NavLink>
             </section>
-          </li>
-        ))}
-      </ul>
-    </div>
+          </section>
+          <section className="flex items-center justify-center">
+            <FontAwesomeIcon
+              icon={['far', 'trash-alt']}
+              onClick={() => handleRemove(state.pdfFile)}
+              className="w-3 h-3 text-gray-400 cursor-pointer hover:opacity-80"
+            />
+          </section>
+        </li>
+      ))}
+    </ul>
   );
 };
 

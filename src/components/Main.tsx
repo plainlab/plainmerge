@@ -5,37 +5,28 @@ import { Helmet } from 'react-helmet';
 
 import MergeList from './merge/MergeList';
 import MergeNew from './merge/MergeNew';
-import MergeDetail from './merge/MergeDetail';
 
 const allRoutes = [
-  {
-    icon: <FontAwesomeIcon icon="home" />,
-    path: '/detail/:id',
-    name: 'Mail merge detail',
-    Component: MergeDetail,
-  },
-  {
-    icon: <FontAwesomeIcon icon="home" />,
-    path: '/list',
-    name: 'Mail merge list',
-    Component: MergeList,
-  },
   {
     icon: <FontAwesomeIcon icon="plus" />,
     path: '/new',
     name: 'New mail merge',
     Component: MergeNew,
   },
+  {
+    icon: <FontAwesomeIcon icon="list" />,
+    path: '/list',
+    name: 'Mail merge list',
+    Component: MergeList,
+  },
 ];
-
-const navRoutes = allRoutes.slice(2);
 
 const Main = () => {
   return (
     <div className="absolute inset-0 flex">
       {/* Left sidebar */}
       <nav className="flex flex-col flex-shrink-0 space-y-1 bg-gray-300">
-        {navRoutes.map(({ path, icon }) => (
+        {allRoutes.map(({ path, icon }) => (
           <NavLink
             to={path}
             key={path}

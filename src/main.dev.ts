@@ -24,6 +24,8 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { FileFilter, IpcMainInvokeEvent } from 'electron/main';
 import fs from 'fs';
+import crypto from 'crypto';
+import glob from 'glob';
 import nodeurl from 'url';
 import { promisify } from 'util';
 import MenuBuilder from './menu';
@@ -32,18 +34,14 @@ import renderPdf, { RenderPdf } from './render';
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 
+const configSuffix = '.merge.json';
+
 const getRowsLimit = () => {
   if (process.env.PAID) {
     return 100_000;
   }
   return 10;
 };
-
-const Store = require('electron-store');
-
-const store = new Store({
-  hotkey: String,
-});
 
 export default class AppUpdater {
   constructor() {
@@ -150,6 +148,150 @@ const createWindow = async () => {
   new AppUpdater();
 };
 
+const getConfigFile = (filename: string) => {
+  const pdfHash = crypto
+    .createHash('md5')
+    .update(filename, 'utf8')
+    .digest('hex');
+
+  return path.join(app.getPath('userData'), `${pdfHash}.${configSuffix}`);
+};
+
+const saveConfig = async (params: RenderPdf) => {
+  await writeFile(getConfigFile(params.pdfFile), JSON.stringify(params), {
+    encoding: 'utf8',
+  });
+};
+
+const loadConfigs = async () => {
+  const configFolder = app.getPath('userData');
+
+  const list = await promisify(glob)(
+    path.join(configFolder, `*.${configSuffix}`)
+  );
+
+  const configList = await Promise.all(
+    list.map(async (fp: string) => {
+      try {
+        const data = await readFile(fp, { encoding: 'utf8' });
+        return JSON.parse(data);
+      } catch (e) {
+        return null;
+      }
+    })
+  );
+
+  return configList.filter((c: any) => c && c.pdfFile);
+};
+
+const removeConfig = async (pdfFile: string) => {
+  return promisify(fs.unlink)(getConfigFile(pdfFile));
+};
+
+const savePdf = async (params: RenderPdf) => {
+  const {
+    pdfFile,
+    pageNumber,
+    excelFile,
+    combinePdf,
+    canvasData,
+    canvasWidth,
+  } = params;
+
+  const file = await dialog.showSaveDialog({
+    filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
+  });
+
+  if (!file || !file.filePath) return;
+
+  try {
+    const created = await renderPdf(
+      file.filePath,
+      pdfFile,
+      pageNumber - 1,
+      excelFile,
+      getRowsLimit(),
+      combinePdf,
+      canvasData,
+      canvasWidth
+    );
+
+    if (created > 0 && Notification.isSupported()) {
+      new Notification({
+        title: 'Mail merged successfully',
+        body: `Created ${created} merged file${created === 1 ? '' : 's'}`,
+      }).show();
+    }
+
+    try {
+      await saveConfig(params);
+    } catch (e) {
+      console.error(e);
+    }
+  } catch (e) {
+    console.error(e);
+    if (Notification.isSupported()) {
+      new Notification({
+        title: 'Mail merged failed',
+        body: 'Check your Excel and PDF files again',
+      }).show();
+    }
+  }
+};
+
+const openPdf = (pdfPath: string) => {
+  const win = new BrowserWindow({
+    title: 'Preview',
+    width: 512,
+    height: 768,
+    webPreferences: {
+      plugins: true,
+      contextIsolation: false,
+    },
+  });
+  win.loadURL(nodeurl.pathToFileURL(pdfPath).toString());
+};
+
+const previewPdf = async (params: RenderPdf) => {
+  const {
+    pdfFile,
+    pageNumber,
+    excelFile,
+    combinePdf,
+    canvasData,
+    canvasWidth,
+  } = params;
+
+  try {
+    const filePath = path.join(app.getPath('temp'), 'plainmerge-preview.pdf');
+    await renderPdf(
+      filePath,
+      pdfFile,
+      pageNumber - 1,
+      excelFile,
+      1,
+      combinePdf,
+      canvasData,
+      canvasWidth
+    );
+    openPdf(filePath);
+
+    try {
+      await saveConfig(params);
+    } catch (e) {
+      console.error(e);
+    }
+  } catch (e) {
+    console.error(e);
+    if (Notification.isSupported()) {
+      new Notification({
+        title: 'Mail merge preview failed',
+        body: 'Check your Excel and PDF files again',
+      }).show();
+    }
+  }
+};
+
 /**
  * Handlers events from React
  */
@@ -196,100 +338,20 @@ ipcMain.handle(
   }
 );
 
-ipcMain.handle('get-store', (_event, { key }) => {
-  return store.get(key);
-});
-
-const openPdf = (pdfPath: string) => {
-  const win = new BrowserWindow({
-    title: 'Preview',
-    width: 512,
-    height: 768,
-    webPreferences: {
-      plugins: true,
-      contextIsolation: false,
-    },
-  });
-  win.loadURL(nodeurl.pathToFileURL(pdfPath).toString());
-};
-
 ipcMain.handle('preview-pdf', async (_event, params: RenderPdf) => {
-  const {
-    pdfFile,
-    pageNumber,
-    excelFile,
-    combinePdf,
-    canvasData,
-    canvasWidth,
-  } = params;
-
-  try {
-    const filePath = path.join(app.getPath('temp'), 'plainmerge-preview.pdf');
-    await renderPdf(
-      filePath,
-      pdfFile,
-      pageNumber - 1,
-      excelFile,
-      1,
-      combinePdf,
-      canvasData,
-      canvasWidth
-    );
-    openPdf(filePath);
-  } catch (e) {
-    console.error(e);
-    if (Notification.isSupported()) {
-      new Notification({
-        title: 'Mail merge preview failed',
-        body: 'Check your Excel and PDF files again',
-      }).show();
-    }
-  }
+  return previewPdf(params);
 });
 
 ipcMain.handle('save-pdf', async (_event, params: RenderPdf) => {
-  const {
-    pdfFile,
-    pageNumber,
-    excelFile,
-    combinePdf,
-    canvasData,
-    canvasWidth,
-  } = params;
+  return savePdf(params);
+});
 
-  const file = await dialog.showSaveDialog({
-    filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
-  });
+ipcMain.handle('load-history', async () => {
+  return loadConfigs();
+});
 
-  if (!file || !file.filePath) return;
-
-  try {
-    const created = await renderPdf(
-      file.filePath,
-      pdfFile,
-      pageNumber - 1,
-      excelFile,
-      getRowsLimit(),
-      combinePdf,
-      canvasData,
-      canvasWidth
-    );
-
-    if (created > 0 && Notification.isSupported()) {
-      new Notification({
-        title: 'Mail merged successfully',
-        body: `Created ${created} merged file${created === 1 ? '' : 's'}`,
-      }).show();
-    }
-  } catch (e) {
-    console.error(e);
-    if (Notification.isSupported()) {
-      new Notification({
-        title: 'Mail merged failed',
-        body: 'Check your Excel and PDF files again',
-      }).show();
-    }
-  }
+ipcMain.handle('remove-history', async (_event, { filename }) => {
+  return removeConfig(filename);
 });
 
 /**
