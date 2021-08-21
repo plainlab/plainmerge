@@ -34,14 +34,14 @@ interface MyTextbox extends Textbox {
 export interface CanvasObjects {
   objects: [MyTextbox | Rect];
 }
-export interface RenderPdf {
+export interface RenderPdfState {
   pdfFile: string;
   excelFile: string;
   combinePdf: boolean;
   pageNumber: number;
-  canvasData: CanvasObjects;
-  canvasWidth: number;
-  formData: Record<string, number>;
+  canvasData?: CanvasObjects;
+  canvasWidth?: number;
+  formData?: Record<string, number>;
 }
 
 const getRowsLimit = () => {
@@ -58,7 +58,8 @@ interface FieldType {
 }
 
 const PdfEditor = () => {
-  const { state } = useLocation<RenderPdf>();
+  const { state } = useLocation<RenderPdfState>();
+  const [currentState, setCurrentState] = useState<RenderPdfState>();
 
   const { editor, onReady, selectedObject } = useFabricJSEditor();
 
@@ -80,7 +81,7 @@ const PdfEditor = () => {
   const [openingPdf, setOpeningPdf] = useState(false);
   const [openingExcel, setOpeningExcel] = useState(false);
 
-  const [loaded, setLoaded] = useState(false);
+  const [pageLoaded, setPageLoaded] = useState(false);
   const [showCanvas, setShowCanvas] = useState(false);
 
   const parentRef = useRef<HTMLDivElement>(null);
@@ -125,7 +126,7 @@ const PdfEditor = () => {
     if (path) {
       setPdfFile(path);
       // Reset nav & canvas
-      setLoaded(false);
+      setPageLoaded(false);
       setShowCanvas(false);
     }
   };
@@ -143,15 +144,29 @@ const PdfEditor = () => {
     }
   };
 
-  const handleRender = async (action: string) => {
-    await ipcRenderer.invoke(action, {
+  const getCurrentState = (): RenderPdfState => {
+    const s = {
+      ...currentState,
       pdfFile,
       pageNumber,
       excelFile,
       combinePdf,
-      canvasData: editor?.dump(),
-      canvasWidth: parentRef.current?.clientWidth,
-    });
+      formData: formFields.reduce((p, c) => ({ ...p, [c.name]: c.index }), {}),
+    };
+
+    if (editor && !formLayout) {
+      s.canvasData = editor.dump();
+    }
+
+    if (parentRef && !formLayout) {
+      s.canvasWidth = parentRef.current?.clientWidth;
+    }
+
+    return s;
+  };
+
+  const handleRender = async (action: string) => {
+    await ipcRenderer.invoke(action, getCurrentState());
   };
 
   const handleSave = async () => {
@@ -164,8 +179,8 @@ const PdfEditor = () => {
 
   const handleDocumentLoadSuccess = (doc: { numPages: number }) => {
     setNumPages(doc.numPages);
-    setPageNumber((state && state.pageNumber) || 1);
-    setLoaded(true);
+    setPageNumber((currentState && currentState.pageNumber) || 1);
+    setPageLoaded(true);
   };
 
   const handlePageLoadSuccess = () => {
@@ -189,10 +204,17 @@ const PdfEditor = () => {
       data: { index },
     });
     e.stopPropagation();
+    setCurrentState(getCurrentState());
   };
 
   const handleClickAddText = (text: string, index: number) => {
     editor?.addText(text, { top: 100, left: 100, data: { index } });
+    setCurrentState(getCurrentState());
+  };
+
+  const handleDeleteObject = () => {
+    editor?.deleteSelected();
+    setCurrentState(getCurrentState());
   };
 
   const fonts = StandardFontValues.map((value) => ({
@@ -228,12 +250,22 @@ const PdfEditor = () => {
         default:
           break;
       }
+      setCurrentState(getCurrentState());
     }
   };
 
   ipcRenderer.on('keydown', (_event, key) => {
     handleKeyDown(key);
   });
+
+  const handleChangeFormField = (e: any, fld: FieldType) => {
+    setFormFields(
+      formFields.map((f) =>
+        f.name === fld.name ? { ...f, index: parseInt(e.target.value, 10) } : f
+      )
+    );
+    setCurrentState(getCurrentState());
+  };
 
   useEffect(() => {
     editor?.updateText({
@@ -242,7 +274,8 @@ const PdfEditor = () => {
       fill,
       textAlign: align as string,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    setCurrentState(getCurrentState());
   }, [fontFamily, fontSize, fill, align]);
 
   useEffect(() => {
@@ -260,24 +293,28 @@ const PdfEditor = () => {
   }, [excelFile]);
 
   useEffect(() => {
-    if (state) {
-      setPdfFile(state.pdfFile);
+    if (currentState) {
+      if (!pdfFile) {
+        setPdfFile(currentState.pdfFile);
 
-      // Reset nav & canvas
-      setLoaded(false);
-      setShowCanvas(false);
+        // Reset nav & canvas
+        setPageLoaded(false);
+        setShowCanvas(false);
+      }
 
-      setExcelFile(state.excelFile);
-      setCombinePdf(state.combinePdf);
+      if (!excelFile) {
+        setExcelFile(currentState.excelFile);
+      }
+
+      setCombinePdf(currentState.combinePdf);
+      ipcRenderer.invoke('save-config', currentState);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state]);
+  }, [currentState]);
 
   useEffect(() => {
-    if (editor && state && state.canvasData) {
-      editor.load(state.canvasData);
+    if (editor && currentState && currentState.canvasData) {
+      editor.load(currentState.canvasData);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);
 
   useEffect(() => {
@@ -286,15 +323,27 @@ const PdfEditor = () => {
         .invoke('load-form', { filename: pdfFile })
         .then((fields: FieldType[]) =>
           setFormFields(
-            fields.map((f) => ({
-              ...f,
-              index: (state && state.formData[f.name]) || -1,
-            }))
+            fields.map((f) => {
+              let index = -1;
+              if (currentState && currentState.formData) {
+                index = currentState.formData[f.name];
+              }
+              return {
+                ...f,
+                index,
+              };
+            })
           )
         )
         .catch(console.error);
     }
   }, [pdfFile]);
+
+  useEffect(() => {
+    if (state) {
+      setCurrentState(state);
+    }
+  }, [state]);
 
   return (
     <div className="flex flex-1">
@@ -360,7 +409,7 @@ const PdfEditor = () => {
                       id="toggle"
                       checked={formLayout}
                       onChange={() => setFormLayout(!formLayout)}
-                      className="absolute block w-5 h-5 bg-white border-4 rounded-full appearance-none cursor-pointer checked:right-0"
+                      className="absolute block w-5 h-5 bg-white border-2 rounded-full appearance-none cursor-pointer checked:right-0"
                     />
                   </label>
                 </div>
@@ -475,7 +524,7 @@ const PdfEditor = () => {
               <button
                 type="button"
                 className="btn-link"
-                onClick={() => editor?.deleteSelected()}
+                onClick={() => handleDeleteObject()}
                 disabled={!selectedObject}
               >
                 <FontAwesomeIcon
@@ -534,15 +583,7 @@ const PdfEditor = () => {
                 </p>
                 <select
                   className="flex-shrink-0 rounded-sm outline-none bg-gray-50 active:outline-none focus:ring-2 focus:outline-none focus:ring-blue-500 h-7"
-                  onChange={(e) =>
-                    setFormFields(
-                      formFields.map((f) =>
-                        f.name === fld.name
-                          ? { ...f, index: parseInt(e.target.value, 10) }
-                          : f
-                      )
-                    )
-                  }
+                  onChange={(e) => handleChangeFormField(e, fld)}
                   value={fld.index}
                 >
                   {[{ index: -1, label: '---' }, ...headers].map((h) => (
@@ -596,7 +637,7 @@ const PdfEditor = () => {
           </Document>
         )}
 
-        {loaded && !formLayout && (
+        {pageLoaded && !formLayout && (
           <div className="flex items-center justify-between">
             {pageNumber > 1 ? (
               <button

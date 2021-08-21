@@ -29,7 +29,7 @@ import glob from 'glob';
 import nodeurl from 'url';
 import { promisify } from 'util';
 import MenuBuilder from './menu';
-import renderPdf, { loadForm, RenderPdf } from './render';
+import renderPdf, { loadForm, RenderPdfState } from './render';
 
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
@@ -157,7 +157,7 @@ const getPathHash = (filename: string) => {
   return path.join(app.getPath('userData'), `${pdfHash}.${configSuffix}`);
 };
 
-const saveConfig = async (params: RenderPdf) => {
+const saveConfig = async (params: RenderPdfState) => {
   await writeFile(getPathHash(params.pdfFile), JSON.stringify(params), {
     encoding: 'utf8',
   });
@@ -188,7 +188,7 @@ const removeConfig = async (pdfFile: string) => {
   return promisify(fs.unlink)(getPathHash(pdfFile));
 };
 
-const savePdf = async (params: RenderPdf) => {
+const savePdf = async (params: RenderPdfState) => {
   const {
     pdfFile,
     pageNumber,
@@ -252,7 +252,7 @@ const openPdf = (pdfPath: string) => {
   win.loadURL(nodeurl.pathToFileURL(pdfPath).toString());
 };
 
-const previewPdf = async (params: RenderPdf) => {
+const previewPdf = async (params: RenderPdfState) => {
   const {
     pdfFile,
     pageNumber,
@@ -341,11 +341,19 @@ ipcMain.handle(
   }
 );
 
-ipcMain.handle('preview-pdf', async (_event, params: RenderPdf) => {
+ipcMain.handle('save-config', async (_event, params: RenderPdfState) => {
+  try {
+    await saveConfig(params);
+  } catch (e) {
+    console.error(e);
+  }
+});
+
+ipcMain.handle('preview-pdf', async (_event, params: RenderPdfState) => {
   return previewPdf(params);
 });
 
-ipcMain.handle('save-pdf', async (_event, params: RenderPdf) => {
+ipcMain.handle('save-pdf', async (_event, params: RenderPdfState) => {
   return savePdf(params);
 });
 

@@ -3,10 +3,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ipcRenderer } from 'electron';
 import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { RenderPdf } from '../pdf/PdfEditor';
+import { RenderPdfState } from '../pdf/PdfEditor';
 
 const MergeList = () => {
-  const [merges, setMerges] = useState<RenderPdf[]>([]);
+  const [merges, setMerges] = useState<RenderPdfState[]>([]);
 
   const loadHistory = () => {
     ipcRenderer

@@ -23,13 +23,14 @@ export interface CanvasObjects {
   objects: [MyTextbox | Rect];
 }
 
-export interface RenderPdf {
+export interface RenderPdfState {
   pdfFile: string;
   excelFile: string;
   combinePdf: boolean;
   pageNumber: number;
   canvasData: CanvasObjects;
   canvasWidth: number;
+  fromData: Record<string, number>;
 }
 
 type FontMap = Record<string, PDFFont>;
