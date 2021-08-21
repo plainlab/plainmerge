@@ -78,7 +78,6 @@ const PdfEditor = () => {
   const [pages, setPages] = useState(1);
   const [headers, setHeaders] = useState<Header[]>([]);
   const [combinePdf, setCombinePdf] = useState(true);
-  const [shouldLoadCanvas, setShouldLoadCanvas] = useState(false);
 
   const loadExcelFile = async (fp: string) => {
     // Read headers
@@ -154,7 +153,7 @@ const PdfEditor = () => {
 
   const handleDocumentLoadSuccess = (doc: { numPages: number }) => {
     setNumPages(doc.numPages);
-    setPageNumber(1);
+    setPageNumber((state && state.pageNumber) || 1);
     setLoaded(true);
   };
 
@@ -251,13 +250,11 @@ const PdfEditor = () => {
 
   useEffect(() => {
     if (state) {
-      setPageNumber(state.pageNumber);
       setPdfFile(state.pdfFile);
 
       // Reset nav & canvas
       setLoaded(false);
       setShowCanvas(false);
-      setShouldLoadCanvas(true);
 
       setExcelFile(state.excelFile);
       setCombinePdf(state.combinePdf);
@@ -266,9 +263,8 @@ const PdfEditor = () => {
   }, [state]);
 
   useEffect(() => {
-    if (editor && shouldLoadCanvas && state) {
+    if (editor && state && state.canvasData) {
       editor.load(state.canvasData);
-      setShouldLoadCanvas(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);

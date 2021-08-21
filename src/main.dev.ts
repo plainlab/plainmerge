@@ -265,7 +265,7 @@ const previewPdf = async (params: RenderPdf) => {
   try {
     const filePath = path.join(
       app.getPath('temp'),
-      `${getPathHash(pdfFile)}-preview.pdf`
+      `preview-${path.basename(pdfFile)}`
     );
     await renderPdf(
       filePath,
