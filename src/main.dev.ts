@@ -148,7 +148,7 @@ const createWindow = async () => {
   new AppUpdater();
 };
 
-const getConfigFile = (filename: string) => {
+const getPathHash = (filename: string) => {
   const pdfHash = crypto
     .createHash('md5')
     .update(filename, 'utf8')
@@ -158,7 +158,7 @@ const getConfigFile = (filename: string) => {
 };
 
 const saveConfig = async (params: RenderPdf) => {
-  await writeFile(getConfigFile(params.pdfFile), JSON.stringify(params), {
+  await writeFile(getPathHash(params.pdfFile), JSON.stringify(params), {
     encoding: 'utf8',
   });
 };
@@ -185,7 +185,7 @@ const loadConfigs = async () => {
 };
 
 const removeConfig = async (pdfFile: string) => {
-  return promisify(fs.unlink)(getConfigFile(pdfFile));
+  return promisify(fs.unlink)(getPathHash(pdfFile));
 };
 
 const savePdf = async (params: RenderPdf) => {
@@ -263,7 +263,10 @@ const previewPdf = async (params: RenderPdf) => {
   } = params;
 
   try {
-    const filePath = path.join(app.getPath('temp'), 'plainmerge-preview.pdf');
+    const filePath = path.join(
+      app.getPath('temp'),
+      `${getPathHash(pdfFile)}-preview.pdf`
+    );
     await renderPdf(
       filePath,
       pdfFile,

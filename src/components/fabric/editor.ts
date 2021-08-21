@@ -42,12 +42,14 @@ const buildEditor = (canvas: fabric.Canvas): FabricJSEditor => {
       };
     },
     load: (data) => {
+      console.log('load', data);
       canvas.loadFromJSON(data, () => {});
       canvas.getObjects().forEach((o, i) => {
         if (data.objects[i].index !== undefined) {
           o.data = { index: data.objects[i].index };
         }
       });
+      canvas.renderAll();
     },
     addText: (text: string, extraOptions?: ITextboxOptions) => {
       const object = new fabric.Textbox(text, {
