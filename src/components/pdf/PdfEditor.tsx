@@ -9,7 +9,7 @@ import { ipcRenderer } from 'electron';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
 import { StandardFonts, StandardFontValues } from 'pdf-lib';
 import XLSX from 'xlsx';
-import { Canvas, Rect, Textbox } from 'fabric/fabric-impl';
+import { Rect, Textbox } from 'fabric/fabric-impl';
 import { TwitterPicker } from 'react-color';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { SizeMe } from 'react-sizeme';
