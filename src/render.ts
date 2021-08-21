@@ -30,7 +30,7 @@ export interface RenderPdfState {
   pageNumber: number;
   canvasData: CanvasObjects;
   canvasWidth: number;
-  fromData: Record<string, number>;
+  formData?: Record<string, number>;
 }
 
 type FontMap = Record<string, PDFFont>;
@@ -104,11 +104,55 @@ const renderPage = async (
   page: PDFPage,
   canvasData: CanvasObjects,
   canvasWidth: number,
+  formData: Record<string, number>,
   pdfDoc: PDFDocument,
   cachedFonts: FontMap
 ) => {
   const { width, height } = page.getSize();
   const ratio = width / canvasWidth;
+
+  const form = pdfDoc.getForm();
+  if (form && formData) {
+    const fieldMap: Record<string, string> = {};
+    form.getFields().forEach((f) => {
+      fieldMap[f.getName()] = f.constructor.name;
+    });
+
+    // FIXME: https://github.com/Hopding/pdf-lib/issues/893
+    console.log(form.getFields());
+
+    Object.keys(formData).forEach((key) => {
+      if (formData[key] === -1) {
+        return;
+      }
+
+      console.log(fieldMap[key], formData[key], row);
+
+      switch (fieldMap[key]) {
+        case 'PDFTextfield':
+          form.getTextField(key).setText(row[formData[key]]);
+          break;
+        case 'PDFCheckBox':
+          if (row[formData[key]].toLowerCase() === 'true') {
+            form.getCheckBox(key).check();
+          } else {
+            form.getCheckBox(key).uncheck();
+          }
+          break;
+        case 'PDFRadioGroup':
+          form.getRadioGroup(key).select(row[formData[key]]);
+          break;
+        case 'PDFOptionList':
+          form.getOptionList(key).select(row[formData[key]]);
+          break;
+        case 'PDFDropdown':
+          form.getDropdown(key).select(row[formData[key]]);
+          break;
+        default:
+          break;
+      }
+    });
+  }
 
   for (let i = 0; i < canvasData.objects.length; i += 1) {
     const obj = canvasData.objects[i];
@@ -187,7 +231,8 @@ const renderPdf = async (
   rowsLimit: number,
   combinePdf: boolean,
   canvasData: CanvasObjects,
-  canvasWidth: number
+  canvasWidth: number,
+  formData: Record<string, number>
 ) => {
   const pdfBuff = await readFile(pdfFile);
   const pdfDoc = await PDFDocument.load(pdfBuff);
@@ -203,6 +248,7 @@ const renderPdf = async (
       page,
       canvasData,
       canvasWidth,
+      formData,
       newDoc,
       cachedFonts
     );

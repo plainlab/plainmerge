@@ -260,6 +260,7 @@ const previewPdf = async (params: RenderPdfState) => {
     combinePdf,
     canvasData,
     canvasWidth,
+    formData,
   } = params;
 
   try {
@@ -275,7 +276,8 @@ const previewPdf = async (params: RenderPdfState) => {
       1,
       combinePdf,
       canvasData,
-      canvasWidth
+      canvasWidth,
+      formData
     );
     openPdf(filePath);
 
