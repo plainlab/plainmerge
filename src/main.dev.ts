@@ -29,7 +29,7 @@ import glob from 'glob';
 import nodeurl from 'url';
 import { promisify } from 'util';
 import MenuBuilder from './menu';
-import renderPdf, { RenderPdf } from './render';
+import renderPdf, { loadForm, RenderPdf } from './render';
 
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
@@ -355,6 +355,10 @@ ipcMain.handle('load-history', async () => {
 
 ipcMain.handle('remove-history', async (_event, { filename }) => {
   return removeConfig(filename);
+});
+
+ipcMain.handle('load-form', async (_event, { filename }) => {
+  return loadForm(filename);
 });
 
 /**

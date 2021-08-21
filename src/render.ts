@@ -168,6 +168,16 @@ const renderPage = async (
   }
 };
 
+export const loadForm = async (filename: string) => {
+  const pdfBuff = await readFile(filename);
+  const pdfDoc = await PDFDocument.load(pdfBuff);
+  const form = pdfDoc.getForm();
+  return form.getFields().map((fld) => ({
+    name: fld.getName(),
+    type: fld.constructor.name,
+  }));
+};
+
 const renderPdf = async (
   output: string,
   pdfFile: string,

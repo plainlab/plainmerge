@@ -49,10 +49,18 @@ const getRowsLimit = () => {
   return 10;
 };
 
+interface FieldType {
+  type: string;
+  name: string;
+}
+
 const PdfEditor = () => {
   const { state } = useLocation<RenderPdf>();
 
   const { editor, onReady, selectedObject } = useFabricJSEditor();
+
+  const [formLayout, setFormLayout] = useState(false);
+  const [formFields, setFormFields] = useState<FieldType[]>([]);
 
   const [fontFamily, setFontFamily] = useState(
     StandardFonts.Helvetica as string
@@ -269,6 +277,15 @@ const PdfEditor = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);
 
+  useEffect(() => {
+    if (pdfFile) {
+      ipcRenderer
+        .invoke('load-form', { filename: pdfFile })
+        .then((fields: FieldType[]) => setFormFields(fields))
+        .catch(console.error);
+    }
+  }, [pdfFile]);
+
   return (
     <div className="flex flex-1">
       <section className="flex flex-col flex-shrink-0 p-4 space-y-4 bg-gray-200 w-60">
@@ -310,14 +327,38 @@ const PdfEditor = () => {
 
       <section className="flex flex-col justify-start flex-1 p-4 space-y-4 bg-gray-100">
         <span className="flex justify-between">
-          <button
-            type="button"
-            className="btn"
-            onClick={handleOpenPdf}
-            disabled={openingPdf}
-          >
-            Choose PDF...
-          </button>
+          <section className="flex items-center justify-center space-x-4">
+            <button
+              type="button"
+              className="btn"
+              onClick={handleOpenPdf}
+              disabled={openingPdf}
+            >
+              Choose PDF...
+            </button>
+
+            {formFields.length ? (
+              <section className="flex items-center justify-center space-x-2 text-xs">
+                <div className="relative inline-block w-8 align-middle transition duration-200 ease-in select-none">
+                  <label
+                    htmlFor="toggle"
+                    className="block h-5 overflow-hidden bg-gray-300 rounded-full cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      name="toggle"
+                      id="toggle"
+                      checked={formLayout}
+                      onChange={() => setFormLayout(!formLayout)}
+                      className="absolute block w-5 h-5 bg-white border-4 rounded-full appearance-none cursor-pointer checked:right-0"
+                    />
+                  </label>
+                </div>
+                <p>{formLayout ? 'Form layout' : 'PDF layout'}</p>
+              </section>
+            ) : null}
+          </section>
+
           <section className="flex items-center justify-between space-x-2">
             {process.env.PAID ? null : (
               <p className="text-red-500">Trial limit: 10 pages</p>

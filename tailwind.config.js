@@ -9,6 +9,7 @@ module.exports = {
       textColor: ['active'],
       opacity: ['disabled'],
       outline: ['focus', 'active'],
+      inset: ['checked'],
     },
   },
   plugins: [],
