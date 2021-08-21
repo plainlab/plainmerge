@@ -62,6 +62,10 @@ const MergeList = () => {
           </section>
         </li>
       ))}
+
+      {merges.length === 0 ? (
+        <p>Recent merge will appear here when you Preview or Merge files.</p>
+      ) : null}
     </ul>
   );
 };
