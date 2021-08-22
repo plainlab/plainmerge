@@ -1,12 +1,12 @@
 {
   "name": "plainmerge",
   "productName": "PlainMerge",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Plain PDF Mail Merger",
   "main": "./main.prod.js",
   "author": {
     "name": "PlainLab",
-    "email": "plainlab@pm.me",
+    "email": "plain@manhtai.com",
     "url": "https://github.com/plainlab"
   },
   "scripts": {
