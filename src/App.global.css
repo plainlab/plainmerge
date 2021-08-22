@@ -19,6 +19,10 @@
     @apply focus:outline-none;
   }
 
+  input {
+    @apply focus:outline-none;
+  }
+
   textarea {
     @apply rounded focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-inset;
   }

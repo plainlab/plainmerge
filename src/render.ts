@@ -8,6 +8,8 @@ import {
   layoutMultilineText,
   TextAlignment,
   PDFPage,
+  PDFForm,
+  PDFField,
 } from 'pdf-lib';
 import fs from 'fs';
 import { promisify } from 'util';
@@ -23,17 +25,19 @@ export interface CanvasObjects {
   objects: [MyTextbox | Rect];
 }
 
-export interface RenderPdf {
+export interface RenderPdfState {
   pdfFile: string;
   excelFile: string;
   combinePdf: boolean;
   pageNumber: number;
   canvasData: CanvasObjects;
   canvasWidth: number;
+  formData?: FormMap;
 }
 
 type FontMap = Record<string, PDFFont>;
 type RowMap = Record<number, string>;
+type FormMap = Record<string, number>;
 
 function hexToRgb(hex: string) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -96,6 +100,55 @@ const readFirstSheet = (path: string, rowsLimit: number) => {
       return row;
     });
   return rows;
+};
+
+const renderForm = (row: RowMap, formData: FormMap, pdfForm: PDFForm) => {
+  if (pdfForm && formData) {
+    const fieldMap: Record<string, PDFField> = {};
+    pdfForm.getFields().forEach((f) => {
+      fieldMap[f.getName()] = f;
+    });
+
+    Object.keys(formData).forEach((key) => {
+      const index = formData[key];
+      if (index === -1) {
+        return;
+      }
+
+      const field = fieldMap[key];
+      const value = `${row[index]}`;
+
+      switch (field.constructor.name) {
+        case 'PDFTextField':
+          pdfForm.getTextField(key).setText(value);
+          break;
+        case 'PDFCheckBox':
+          if (value && value.toLowerCase() === 'true') {
+            pdfForm.getCheckBox(key).check();
+          } else {
+            pdfForm.getCheckBox(key).uncheck();
+          }
+          break;
+        case 'PDFRadioGroup':
+          if (pdfForm.getRadioGroup(key).getOptions().includes(value)) {
+            pdfForm.getRadioGroup(key).select(value);
+          }
+          break;
+        case 'PDFOptionList':
+          if (pdfForm.getOptionList(key).getOptions().includes(value)) {
+            pdfForm.getOptionList(key).select(value);
+          }
+          break;
+        case 'PDFDropdown':
+          if (pdfForm.getDropdown(key).getOptions().includes(value)) {
+            pdfForm.getDropdown(key).select(value);
+          }
+          break;
+        default:
+          break;
+      }
+    });
+  }
 };
 
 const renderPage = async (
@@ -168,6 +221,16 @@ const renderPage = async (
   }
 };
 
+export const loadForm = async (filename: string) => {
+  const pdfBuff = await readFile(filename);
+  const pdfDoc = await PDFDocument.load(pdfBuff);
+  const form = pdfDoc.getForm();
+  return form.getFields().map((fld) => ({
+    name: fld.getName(),
+    type: fld.constructor.name,
+  }));
+};
+
 const renderPdf = async (
   output: string,
   pdfFile: string,
@@ -176,26 +239,34 @@ const renderPdf = async (
   rowsLimit: number,
   combinePdf: boolean,
   canvasData: CanvasObjects,
-  canvasWidth: number
+  canvasWidth: number,
+  formData: FormMap
 ) => {
   const pdfBuff = await readFile(pdfFile);
-  const pdfDoc = await PDFDocument.load(pdfBuff);
-
+  let pdfDoc = await PDFDocument.load(pdfBuff);
   let newDoc = await PDFDocument.create();
   let cachedFonts: FontMap = {};
 
   const rows: RowMap[] = readFirstSheet(excelFile, rowsLimit);
   for (let i = 0; i < rows.length; i += 1) {
-    const [page] = await newDoc.copyPages(pdfDoc, [pageIndex]);
+    // Render with old pdf doc
+    renderForm(rows[i], formData, pdfDoc.getForm());
+    const page = pdfDoc.getPage(pageIndex);
     await renderPage(
       rows[i],
       page,
       canvasData,
       canvasWidth,
-      newDoc,
+      pdfDoc,
       cachedFonts
     );
-    newDoc.addPage(page);
+
+    // Copy to new pdf, load and save will remove fields, but retain value
+    const [newPage] = await newDoc.copyPages(
+      await PDFDocument.load(await pdfDoc.save()),
+      [pageIndex]
+    );
+    newDoc.addPage(newPage);
 
     if (!combinePdf) {
       const pdfBytes = await newDoc.save();
@@ -211,6 +282,9 @@ const renderPdf = async (
       newDoc = await PDFDocument.create();
       cachedFonts = {};
     }
+
+    // Load old doc again
+    pdfDoc = await PDFDocument.load(pdfBuff);
   }
 
   if (combinePdf) {

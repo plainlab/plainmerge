@@ -11,6 +11,7 @@
 
 - Drag & drop fields to customize PDF template
 - Support `.xlsx`, `.xls`, `.ods` Excel files
+- Support PDF forms
 - Work offline
 - Cross-platform
 

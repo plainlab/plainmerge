@@ -29,7 +29,7 @@ import glob from 'glob';
 import nodeurl from 'url';
 import { promisify } from 'util';
 import MenuBuilder from './menu';
-import renderPdf, { RenderPdf } from './render';
+import renderPdf, { loadForm, RenderPdfState } from './render';
 
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
@@ -157,7 +157,7 @@ const getPathHash = (filename: string) => {
   return path.join(app.getPath('userData'), `${pdfHash}.${configSuffix}`);
 };
 
-const saveConfig = async (params: RenderPdf) => {
+const saveConfig = async (params: RenderPdfState) => {
   await writeFile(getPathHash(params.pdfFile), JSON.stringify(params), {
     encoding: 'utf8',
   });
@@ -188,7 +188,13 @@ const removeConfig = async (pdfFile: string) => {
   return promisify(fs.unlink)(getPathHash(pdfFile));
 };
 
-const savePdf = async (params: RenderPdf) => {
+const savePdf = async (params: RenderPdfState) => {
+  try {
+    await saveConfig(params);
+  } catch (e) {
+    console.error(e);
+  }
+
   const {
     pdfFile,
     pageNumber,
@@ -196,6 +202,7 @@ const savePdf = async (params: RenderPdf) => {
     combinePdf,
     canvasData,
     canvasWidth,
+    formData,
   } = params;
 
   const file = await dialog.showSaveDialog({
@@ -213,7 +220,8 @@ const savePdf = async (params: RenderPdf) => {
       getRowsLimit(),
       combinePdf,
       canvasData,
-      canvasWidth
+      canvasWidth,
+      formData || {}
     );
 
     if (created > 0 && Notification.isSupported()) {
@@ -221,12 +229,6 @@ const savePdf = async (params: RenderPdf) => {
         title: 'Mail merged successfully',
         body: `Created ${created} merged file${created === 1 ? '' : 's'}`,
       }).show();
-    }
-
-    try {
-      await saveConfig(params);
-    } catch (e) {
-      console.error(e);
     }
   } catch (e) {
     console.error(e);
@@ -252,7 +254,13 @@ const openPdf = (pdfPath: string) => {
   win.loadURL(nodeurl.pathToFileURL(pdfPath).toString());
 };
 
-const previewPdf = async (params: RenderPdf) => {
+const previewPdf = async (params: RenderPdfState) => {
+  try {
+    await saveConfig(params);
+  } catch (e) {
+    console.error(e);
+  }
+
   const {
     pdfFile,
     pageNumber,
@@ -260,6 +268,7 @@ const previewPdf = async (params: RenderPdf) => {
     combinePdf,
     canvasData,
     canvasWidth,
+    formData,
   } = params;
 
   try {
@@ -275,15 +284,10 @@ const previewPdf = async (params: RenderPdf) => {
       1,
       combinePdf,
       canvasData,
-      canvasWidth
+      canvasWidth,
+      formData || {}
     );
     openPdf(filePath);
-
-    try {
-      await saveConfig(params);
-    } catch (e) {
-      console.error(e);
-    }
   } catch (e) {
     console.error(e);
     if (Notification.isSupported()) {
@@ -341,11 +345,19 @@ ipcMain.handle(
   }
 );
 
-ipcMain.handle('preview-pdf', async (_event, params: RenderPdf) => {
+ipcMain.handle('save-config', async (_event, params: RenderPdfState) => {
+  try {
+    await saveConfig(params);
+  } catch (e) {
+    console.error(e);
+  }
+});
+
+ipcMain.handle('preview-pdf', async (_event, params: RenderPdfState) => {
   return previewPdf(params);
 });
 
-ipcMain.handle('save-pdf', async (_event, params: RenderPdf) => {
+ipcMain.handle('save-pdf', async (_event, params: RenderPdfState) => {
   return savePdf(params);
 });
 
@@ -355,6 +367,10 @@ ipcMain.handle('load-history', async () => {
 
 ipcMain.handle('remove-history', async (_event, { filename }) => {
   return removeConfig(filename);
+});
+
+ipcMain.handle('load-form', async (_event, { filename }) => {
+  return loadForm(filename);
 });
 
 /**
