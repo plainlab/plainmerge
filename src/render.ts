@@ -8,6 +8,7 @@ import {
   layoutMultilineText,
   TextAlignment,
   PDFPage,
+  PDFForm,
 } from 'pdf-lib';
 import fs from 'fs';
 import { promisify } from 'util';
@@ -30,11 +31,12 @@ export interface RenderPdfState {
   pageNumber: number;
   canvasData: CanvasObjects;
   canvasWidth: number;
-  formData?: Record<string, number>;
+  formData?: FormMap;
 }
 
 type FontMap = Record<string, PDFFont>;
 type RowMap = Record<number, string>;
+type FormMap = Record<string, number>;
 
 function hexToRgb(hex: string) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -99,60 +101,63 @@ const readFirstSheet = (path: string, rowsLimit: number) => {
   return rows;
 };
 
-const renderPage = async (
-  row: RowMap,
-  page: PDFPage,
-  canvasData: CanvasObjects,
-  canvasWidth: number,
-  formData: Record<string, number>,
-  pdfDoc: PDFDocument,
-  cachedFonts: FontMap
-) => {
-  const { width, height } = page.getSize();
-  const ratio = width / canvasWidth;
-
-  const form = pdfDoc.getForm();
-  if (form && formData) {
+const renderForm = (row: RowMap, formData: FormMap, pdfForm: PDFForm) => {
+  if (pdfForm && formData) {
     const fieldMap: Record<string, string> = {};
-    form.getFields().forEach((f) => {
+    pdfForm.getFields().forEach((f) => {
       fieldMap[f.getName()] = f.constructor.name;
     });
-
-    // FIXME: https://github.com/Hopding/pdf-lib/issues/893
-    console.log(form.getFields());
 
     Object.keys(formData).forEach((key) => {
       if (formData[key] === -1) {
         return;
       }
 
-      console.log(fieldMap[key], formData[key], row);
+      const value = row[formData[key]] || '';
 
       switch (fieldMap[key]) {
         case 'PDFTextfield':
-          form.getTextField(key).setText(row[formData[key]]);
+          pdfForm.getTextField(key).setText(value);
           break;
         case 'PDFCheckBox':
-          if (row[formData[key]].toLowerCase() === 'true') {
-            form.getCheckBox(key).check();
+          if (value.toLowerCase() === 'true') {
+            pdfForm.getCheckBox(key).check();
           } else {
-            form.getCheckBox(key).uncheck();
+            pdfForm.getCheckBox(key).uncheck();
           }
           break;
         case 'PDFRadioGroup':
-          form.getRadioGroup(key).select(row[formData[key]]);
+          if (pdfForm.getRadioGroup(key).getOptions().includes(value)) {
+            pdfForm.getRadioGroup(key).select(value);
+          }
           break;
         case 'PDFOptionList':
-          form.getOptionList(key).select(row[formData[key]]);
+          if (pdfForm.getOptionList(key).getOptions().includes(value)) {
+            pdfForm.getOptionList(key).select(value);
+          }
           break;
         case 'PDFDropdown':
-          form.getDropdown(key).select(row[formData[key]]);
+          if (pdfForm.getDropdown(key).getOptions().includes(value)) {
+            pdfForm.getDropdown(key).select(value);
+          }
           break;
         default:
           break;
       }
     });
   }
+};
+
+const renderPage = async (
+  row: RowMap,
+  page: PDFPage,
+  canvasData: CanvasObjects,
+  canvasWidth: number,
+  pdfDoc: PDFDocument,
+  cachedFonts: FontMap
+) => {
+  const { width, height } = page.getSize();
+  const ratio = width / canvasWidth;
 
   for (let i = 0; i < canvasData.objects.length; i += 1) {
     const obj = canvasData.objects[i];
@@ -232,7 +237,7 @@ const renderPdf = async (
   combinePdf: boolean,
   canvasData: CanvasObjects,
   canvasWidth: number,
-  formData: Record<string, number>
+  formData: FormMap
 ) => {
   const pdfBuff = await readFile(pdfFile);
   const pdfDoc = await PDFDocument.load(pdfBuff);
@@ -242,13 +247,16 @@ const renderPdf = async (
 
   const rows: RowMap[] = readFirstSheet(excelFile, rowsLimit);
   for (let i = 0; i < rows.length; i += 1) {
+    // Render form first
+    renderForm(rows[i], formData, pdfDoc.getForm());
+
+    // Render page second
     const [page] = await newDoc.copyPages(pdfDoc, [pageIndex]);
     await renderPage(
       rows[i],
       page,
       canvasData,
       canvasWidth,
-      formData,
       newDoc,
       cachedFonts
     );

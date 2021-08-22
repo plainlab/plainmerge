@@ -189,6 +189,12 @@ const removeConfig = async (pdfFile: string) => {
 };
 
 const savePdf = async (params: RenderPdfState) => {
+  try {
+    await saveConfig(params);
+  } catch (e) {
+    console.error(e);
+  }
+
   const {
     pdfFile,
     pageNumber,
@@ -196,6 +202,7 @@ const savePdf = async (params: RenderPdfState) => {
     combinePdf,
     canvasData,
     canvasWidth,
+    formData,
   } = params;
 
   const file = await dialog.showSaveDialog({
@@ -213,7 +220,8 @@ const savePdf = async (params: RenderPdfState) => {
       getRowsLimit(),
       combinePdf,
       canvasData,
-      canvasWidth
+      canvasWidth,
+      formData || {}
     );
 
     if (created > 0 && Notification.isSupported()) {
@@ -221,12 +229,6 @@ const savePdf = async (params: RenderPdfState) => {
         title: 'Mail merged successfully',
         body: `Created ${created} merged file${created === 1 ? '' : 's'}`,
       }).show();
-    }
-
-    try {
-      await saveConfig(params);
-    } catch (e) {
-      console.error(e);
     }
   } catch (e) {
     console.error(e);
@@ -253,6 +255,12 @@ const openPdf = (pdfPath: string) => {
 };
 
 const previewPdf = async (params: RenderPdfState) => {
+  try {
+    await saveConfig(params);
+  } catch (e) {
+    console.error(e);
+  }
+
   const {
     pdfFile,
     pageNumber,
@@ -277,15 +285,9 @@ const previewPdf = async (params: RenderPdfState) => {
       combinePdf,
       canvasData,
       canvasWidth,
-      formData
+      formData || {}
     );
     openPdf(filePath);
-
-    try {
-      await saveConfig(params);
-    } catch (e) {
-      console.error(e);
-    }
   } catch (e) {
     console.error(e);
     if (Notification.isSupported()) {

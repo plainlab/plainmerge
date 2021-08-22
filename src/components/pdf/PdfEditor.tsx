@@ -145,24 +145,18 @@ const PdfEditor = () => {
   };
 
   const getCurrentState = (): RenderPdfState => {
-    const s = {
-      ...currentState,
+    return {
       pdfFile,
       pageNumber,
       excelFile,
       combinePdf,
       formData: formFields.reduce((p, c) => ({ ...p, [c.name]: c.index }), {}),
+      // FIXME: Better way to keep canvas state?
+      canvasData: parentRef.current ? editor?.dump() : currentState?.canvasData,
+      canvasWidth: parentRef.current
+        ? parentRef.current?.clientWidth
+        : currentState?.canvasWidth,
     };
-
-    if (editor && !formLayout) {
-      s.canvasData = editor.dump();
-    }
-
-    if (parentRef && !formLayout) {
-      s.canvasWidth = parentRef.current?.clientWidth;
-    }
-
-    return s;
   };
 
   const handleRender = async (action: string) => {
@@ -264,7 +258,6 @@ const PdfEditor = () => {
         f.name === fld.name ? { ...f, index: parseInt(e.target.value, 10) } : f
       )
     );
-    setCurrentState(getCurrentState());
   };
 
   useEffect(() => {
@@ -413,7 +406,7 @@ const PdfEditor = () => {
                     />
                   </label>
                 </div>
-                <p>{formLayout ? 'Form layout' : 'PDF layout'}</p>
+                <p>{formLayout ? 'Form mode' : 'PDF mode'}</p>
               </section>
             ) : null}
           </section>

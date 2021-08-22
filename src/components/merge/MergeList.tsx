@@ -36,11 +36,11 @@ const MergeList = () => {
           <section className="flex items-center justify-center flex-1 space-x-2 truncate">
             <NavLink
               to={{ pathname: '/new', state }}
-              className="flex items-center justify-center flex-shrink-0 w-10"
+              className="flex items-center justify-center flex-shrink-0 w-8"
             >
               <FontAwesomeIcon
                 icon={['far', 'file-pdf']}
-                className="flex-1 w-8 h-8 text-red-400 hover:opacity-80"
+                className="flex-1 w-5 h-5 text-red-400 hover:opacity-80"
               />
             </NavLink>
 
@@ -64,7 +64,7 @@ const MergeList = () => {
       ))}
 
       {merges.length === 0 ? (
-        <p>Recent merge will appear here when you Preview or Merge files.</p>
+        <p>Recent files will be saved here when you Preview or Merge.</p>
       ) : null}
     </ul>
   );
