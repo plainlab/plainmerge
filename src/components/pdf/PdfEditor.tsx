@@ -151,6 +151,7 @@ const PdfEditor = () => {
       excelFile,
       combinePdf,
       formData: formFields.reduce((p, c) => ({ ...p, [c.name]: c.index }), {}),
+
       // FIXME: Better way to keep canvas state?
       canvasData: parentRef.current ? editor?.dump() : currentState?.canvasData,
       canvasWidth: parentRef.current
@@ -406,7 +407,7 @@ const PdfEditor = () => {
                     />
                   </label>
                 </div>
-                <p>{formLayout ? 'Form mode' : 'PDF mode'}</p>
+                <p>{formLayout ? 'Form' : 'Canvas'}</p>
               </section>
             ) : null}
           </section>

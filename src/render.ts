@@ -9,6 +9,7 @@ import {
   TextAlignment,
   PDFPage,
   PDFForm,
+  PDFField,
 } from 'pdf-lib';
 import fs from 'fs';
 import { promisify } from 'util';
@@ -103,24 +104,26 @@ const readFirstSheet = (path: string, rowsLimit: number) => {
 
 const renderForm = (row: RowMap, formData: FormMap, pdfForm: PDFForm) => {
   if (pdfForm && formData) {
-    const fieldMap: Record<string, string> = {};
+    const fieldMap: Record<string, PDFField> = {};
     pdfForm.getFields().forEach((f) => {
-      fieldMap[f.getName()] = f.constructor.name;
+      fieldMap[f.getName()] = f;
     });
 
     Object.keys(formData).forEach((key) => {
-      if (formData[key] === -1) {
+      const index = formData[key];
+      if (index === -1) {
         return;
       }
 
-      const value = row[formData[key]] || '';
+      const field = fieldMap[key];
+      const value = `${row[index]}`;
 
-      switch (fieldMap[key]) {
-        case 'PDFTextfield':
+      switch (field.constructor.name) {
+        case 'PDFTextField':
           pdfForm.getTextField(key).setText(value);
           break;
         case 'PDFCheckBox':
-          if (value.toLowerCase() === 'true') {
+          if (value && value.toLowerCase() === 'true') {
             pdfForm.getCheckBox(key).check();
           } else {
             pdfForm.getCheckBox(key).uncheck();
@@ -240,18 +243,17 @@ const renderPdf = async (
   formData: FormMap
 ) => {
   const pdfBuff = await readFile(pdfFile);
-  const pdfDoc = await PDFDocument.load(pdfBuff);
-
-  let newDoc = await PDFDocument.create();
+  let newDoc = await PDFDocument.load(pdfBuff);
   let cachedFonts: FontMap = {};
 
   const rows: RowMap[] = readFirstSheet(excelFile, rowsLimit);
   for (let i = 0; i < rows.length; i += 1) {
     // Render form first
-    renderForm(rows[i], formData, pdfDoc.getForm());
+    renderForm(rows[i], formData, newDoc.getForm());
+
+    const page = newDoc.getPage(pageIndex);
 
     // Render page second
-    const [page] = await newDoc.copyPages(pdfDoc, [pageIndex]);
     await renderPage(
       rows[i],
       page,
@@ -260,7 +262,6 @@ const renderPdf = async (
       newDoc,
       cachedFonts
     );
-    newDoc.addPage(page);
 
     if (!combinePdf) {
       const pdfBytes = await newDoc.save();
@@ -273,7 +274,7 @@ const renderPdf = async (
       await writeFile(outputName, pdfBytes);
 
       // Reset
-      newDoc = await PDFDocument.create();
+      newDoc = await PDFDocument.load(pdfBuff);
       cachedFonts = {};
     }
   }
