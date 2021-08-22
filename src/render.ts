@@ -243,25 +243,30 @@ const renderPdf = async (
   formData: FormMap
 ) => {
   const pdfBuff = await readFile(pdfFile);
-  let newDoc = await PDFDocument.load(pdfBuff);
+  let pdfDoc = await PDFDocument.load(pdfBuff);
+  let newDoc = await PDFDocument.create();
   let cachedFonts: FontMap = {};
 
   const rows: RowMap[] = readFirstSheet(excelFile, rowsLimit);
   for (let i = 0; i < rows.length; i += 1) {
-    // Render form first
-    renderForm(rows[i], formData, newDoc.getForm());
-
-    const page = newDoc.getPage(pageIndex);
-
-    // Render page second
+    // Render with old pdf doc
+    renderForm(rows[i], formData, pdfDoc.getForm());
+    const page = pdfDoc.getPage(pageIndex);
     await renderPage(
       rows[i],
       page,
       canvasData,
       canvasWidth,
-      newDoc,
+      pdfDoc,
       cachedFonts
     );
+
+    // Copy to new pdf, load and save will remove fields, but retain value
+    const [newPage] = await newDoc.copyPages(
+      await PDFDocument.load(await pdfDoc.save()),
+      [pageIndex]
+    );
+    newDoc.addPage(newPage);
 
     if (!combinePdf) {
       const pdfBytes = await newDoc.save();
@@ -274,9 +279,12 @@ const renderPdf = async (
       await writeFile(outputName, pdfBytes);
 
       // Reset
-      newDoc = await PDFDocument.load(pdfBuff);
+      newDoc = await PDFDocument.create();
       cachedFonts = {};
     }
+
+    // Load old doc again
+    pdfDoc = await PDFDocument.load(pdfBuff);
   }
 
   if (combinePdf) {
