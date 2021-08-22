@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-loop-func */
 /* eslint-disable no-await-in-loop */
 import { Rect, Textbox } from 'fabric/fabric-impl';
 import {
@@ -292,8 +293,11 @@ const renderPdf = async (
 
   const rows: RowMap[] = readFirstSheet(excelFile, rowsLimit);
   for (let i = 0; i < rows.length; i += 1) {
-    // Render with old pdf doc
+    // Render all with form
     renderForm(rows[i], formData, pdfDoc.getForm());
+
+    // Render 1 page with canvas for now
+    // TODO: support multiple
     const page = pdfDoc.getPage(pageIndex);
     await renderPage(
       rows[i],
@@ -305,11 +309,12 @@ const renderPdf = async (
     );
 
     // Copy to new pdf, load and save will remove fields, but retain value
-    const [newPage] = await newDoc.copyPages(
+    const newPages = await newDoc.copyPages(
       await PDFDocument.load(await pdfDoc.save()),
-      [pageIndex]
+      pdfDoc.getPageIndices()
     );
-    newDoc.addPage(newPage);
+
+    newPages.forEach((p) => newDoc.addPage(p));
 
     if (!combinePdf) {
       const pdfBytes = await newDoc.save();
