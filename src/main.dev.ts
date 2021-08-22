@@ -221,7 +221,7 @@ const savePdf = async (params: RenderPdfState) => {
       combinePdf,
       canvasData,
       canvasWidth,
-      formData || {}
+      formData
     );
 
     if (created > 0 && Notification.isSupported()) {

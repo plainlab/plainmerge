@@ -10,6 +10,11 @@ import {
   PDFPage,
   PDFForm,
   PDFField,
+  PDFTextField,
+  PDFCheckBox,
+  PDFDropdown,
+  PDFOptionList,
+  PDFRadioGroup,
 } from 'pdf-lib';
 import fs from 'fs';
 import { promisify } from 'util';
@@ -30,8 +35,8 @@ export interface RenderPdfState {
   excelFile: string;
   combinePdf: boolean;
   pageNumber: number;
-  canvasData: CanvasObjects;
-  canvasWidth: number;
+  canvasData?: CanvasObjects;
+  canvasWidth?: number;
   formData?: FormMap;
 }
 
@@ -102,63 +107,98 @@ const readFirstSheet = (path: string, rowsLimit: number) => {
   return rows;
 };
 
-const renderForm = (row: RowMap, formData: FormMap, pdfForm: PDFForm) => {
-  if (pdfForm && formData) {
-    const fieldMap: Record<string, PDFField> = {};
-    pdfForm.getFields().forEach((f) => {
-      fieldMap[f.getName()] = f;
-    });
+// This workaround fixes TS to JS compiling problem
+type SupportedField =
+  | ''
+  | 'TextField'
+  | 'CheckBox'
+  | 'RadioGroup'
+  | 'OptionList'
+  | 'Dropdown';
 
-    Object.keys(formData).forEach((key) => {
-      const index = formData[key];
-      if (index === -1) {
-        return;
-      }
-
-      const field = fieldMap[key];
-      const value = `${row[index]}`;
-
-      switch (field.constructor.name) {
-        case 'PDFTextField':
-          pdfForm.getTextField(key).setText(value);
-          break;
-        case 'PDFCheckBox':
-          if (value && value.toLowerCase() === 'true') {
-            pdfForm.getCheckBox(key).check();
-          } else {
-            pdfForm.getCheckBox(key).uncheck();
-          }
-          break;
-        case 'PDFRadioGroup':
-          if (pdfForm.getRadioGroup(key).getOptions().includes(value)) {
-            pdfForm.getRadioGroup(key).select(value);
-          }
-          break;
-        case 'PDFOptionList':
-          if (pdfForm.getOptionList(key).getOptions().includes(value)) {
-            pdfForm.getOptionList(key).select(value);
-          }
-          break;
-        case 'PDFDropdown':
-          if (pdfForm.getDropdown(key).getOptions().includes(value)) {
-            pdfForm.getDropdown(key).select(value);
-          }
-          break;
-        default:
-          break;
-      }
-    });
+const getFieldType = (fld: PDFField): SupportedField => {
+  if (fld instanceof PDFTextField) {
+    return 'TextField';
   }
+  if (fld instanceof PDFCheckBox) {
+    return 'CheckBox';
+  }
+  if (fld instanceof PDFRadioGroup) {
+    return 'RadioGroup';
+  }
+  if (fld instanceof PDFOptionList) {
+    return 'OptionList';
+  }
+  if (fld instanceof PDFDropdown) {
+    return 'Dropdown';
+  }
+  return '';
+};
+
+const renderForm = (row: RowMap, formData?: FormMap, pdfForm?: PDFForm) => {
+  if (!pdfForm || !formData) {
+    return;
+  }
+  const fieldMap: Record<string, PDFField> = {};
+  pdfForm.getFields().forEach((f) => {
+    fieldMap[f.getName()] = f;
+  });
+
+  Object.keys(formData).forEach((key) => {
+    const index = formData[key];
+    let value = row[index];
+
+    if (index === -1 || value === undefined || value === null) {
+      return;
+    }
+
+    const field = fieldMap[key];
+    value = `${value}`;
+
+    switch (getFieldType(field)) {
+      case 'TextField':
+        pdfForm.getTextField(key).setText(value);
+        break;
+      case 'CheckBox':
+        if (value && value.toLowerCase() === 'true') {
+          pdfForm.getCheckBox(key).check();
+        } else {
+          pdfForm.getCheckBox(key).uncheck();
+        }
+        break;
+      case 'RadioGroup':
+        if (pdfForm.getRadioGroup(key).getOptions().includes(value)) {
+          pdfForm.getRadioGroup(key).select(value);
+        }
+        break;
+      case 'OptionList':
+        if (pdfForm.getOptionList(key).getOptions().includes(value)) {
+          pdfForm.getOptionList(key).select(value);
+        }
+        break;
+      case 'Dropdown':
+        if (pdfForm.getDropdown(key).getOptions().includes(value)) {
+          pdfForm.getDropdown(key).select(value);
+        }
+        break;
+      default:
+        break;
+    }
+  });
 };
 
 const renderPage = async (
   row: RowMap,
   page: PDFPage,
-  canvasData: CanvasObjects,
-  canvasWidth: number,
   pdfDoc: PDFDocument,
-  cachedFonts: FontMap
+  cachedFonts: FontMap,
+  canvasData?: CanvasObjects,
+  canvasWidth?: number
 ) => {
+  if (!canvasData || !canvasWidth) {
+    return;
+  }
+
   const { width, height } = page.getSize();
   const ratio = width / canvasWidth;
 
@@ -225,10 +265,13 @@ export const loadForm = async (filename: string) => {
   const pdfBuff = await readFile(filename);
   const pdfDoc = await PDFDocument.load(pdfBuff);
   const form = pdfDoc.getForm();
-  return form.getFields().map((fld) => ({
-    name: fld.getName(),
-    type: fld.constructor.name,
-  }));
+  return form
+    .getFields()
+    .map((fld) => ({
+      name: fld.getName(),
+      type: getFieldType(fld),
+    }))
+    .filter((v) => v.type);
 };
 
 const renderPdf = async (
@@ -238,9 +281,9 @@ const renderPdf = async (
   excelFile: string,
   rowsLimit: number,
   combinePdf: boolean,
-  canvasData: CanvasObjects,
-  canvasWidth: number,
-  formData: FormMap
+  canvasData?: CanvasObjects,
+  canvasWidth?: number,
+  formData?: FormMap
 ) => {
   const pdfBuff = await readFile(pdfFile);
   let pdfDoc = await PDFDocument.load(pdfBuff);
@@ -255,10 +298,10 @@ const renderPdf = async (
     await renderPage(
       rows[i],
       page,
-      canvasData,
-      canvasWidth,
       pdfDoc,
-      cachedFonts
+      cachedFonts,
+      canvasData,
+      canvasWidth
     );
 
     // Copy to new pdf, load and save will remove fields, but retain value

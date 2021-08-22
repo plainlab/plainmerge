@@ -570,10 +570,7 @@ const PdfEditor = () => {
                 <p className="flex items-center justify-start flex-1 space-x-2 truncate">
                   <span className="opacity-70">{idx + 1}.</span>
                   <span className="font-medium">{fld.name}</span>
-                  <span className="text-xs opacity-70">
-                    ({fld.type.slice(3)})
-                  </span>
-                  :
+                  <span className="text-xs opacity-70">({fld.type})</span>:
                 </p>
                 <select
                   className="flex-shrink-0 rounded-sm outline-none bg-gray-50 active:outline-none focus:ring-2 focus:outline-none focus:ring-blue-500 h-7"
