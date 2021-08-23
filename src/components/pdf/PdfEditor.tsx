@@ -55,6 +55,8 @@ interface FieldType {
   type: string;
   name: string;
   index: number;
+  order: number;
+  show: boolean;
 }
 
 const PdfEditor = () => {
@@ -83,6 +85,7 @@ const PdfEditor = () => {
 
   const [pageLoaded, setPageLoaded] = useState(false);
   const [showCanvas, setShowCanvas] = useState(false);
+  const [searchField, setSearchField] = useState('');
 
   const parentRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -212,6 +215,10 @@ const PdfEditor = () => {
     setCurrentState(getCurrentState());
   };
 
+  const handleSearch = (e: { target: { value: string } }) => {
+    setSearchField(e.target.value);
+  };
+
   const fonts = StandardFontValues.map((value) => ({
     label: value.replace('-', ' '),
     value,
@@ -317,7 +324,7 @@ const PdfEditor = () => {
         .invoke('load-form', { filename: pdfFile })
         .then((fields: FieldType[]) =>
           setFormFields(
-            fields.map((f) => {
+            fields.map((f, idx) => {
               let index = -1;
               if (currentState && currentState.formData) {
                 index = currentState.formData[f.name];
@@ -325,6 +332,8 @@ const PdfEditor = () => {
               return {
                 ...f,
                 index,
+                order: idx + 1,
+                show: true,
               };
             })
           )
@@ -338,6 +347,19 @@ const PdfEditor = () => {
       setCurrentState(state);
     }
   }, [state]);
+
+  useEffect(() => {
+    if (searchField.trim()) {
+      setFormFields(
+        formFields.map((f) => ({
+          ...f,
+          show: !!f.name.match(new RegExp(searchField, 'gi')),
+        }))
+      );
+    } else {
+      setFormFields(formFields.map((f) => ({ ...f, show: true })));
+    }
+  }, [searchField]);
 
   return (
     <div className="flex flex-1">
@@ -561,31 +583,52 @@ const PdfEditor = () => {
         ) : null}
 
         {formLayout ? (
-          <ol className="flex flex-col items-start justify-center py-4 space-y-4">
-            {formFields.map((fld, idx) => (
-              <li
-                key={fld.name}
-                className="flex items-center justify-between w-full py-1 space-x-2 border-b border-gray-200 border-dashed"
-              >
-                <p className="flex items-center justify-start flex-1 space-x-2 truncate">
-                  <span className="opacity-70">{idx + 1}.</span>
-                  <span className="font-medium">{fld.name}</span>
-                  <span className="text-xs opacity-70">({fld.type})</span>:
-                </p>
-                <select
-                  className="flex-shrink-0 rounded-sm outline-none bg-gray-50 active:outline-none focus:ring-2 focus:outline-none focus:ring-blue-500 h-7"
-                  onChange={(e) => handleChangeFormField(e, fld)}
-                  value={fld.index}
-                >
-                  {[{ index: -1, label: '---' }, ...headers].map((h) => (
-                    <option value={h.index} key={h.index}>
-                      {h.label}
-                    </option>
-                  ))}
-                </select>
-              </li>
-            ))}
-          </ol>
+          <section className="flex flex-col items-stretch justify-start flex-1 space-y-4">
+            <div className="flex items-center px-2 space-x-1 text-gray-400 bg-gray-200 rounded-md focus-within:text-gray-600 focus-within:ring-1 focus-within:ring-blue-500">
+              <FontAwesomeIcon icon="search" />
+              <input
+                type="text"
+                className="w-full p-1 bg-gray-200 border-none rounded-r-md focus:ring-0"
+                value={searchField}
+                onChange={handleSearch}
+                placeholder="Search..."
+              />
+              {searchField && (
+                <FontAwesomeIcon
+                  icon="times-circle"
+                  onClick={() => setSearchField('')}
+                />
+              )}
+            </div>
+
+            <ol className="flex flex-col items-start justify-center space-y-4">
+              {formFields
+                .filter((f) => f.show)
+                .map((fld) => (
+                  <li
+                    key={fld.name}
+                    className="flex items-center justify-between w-full py-1 space-x-2 border-b border-gray-200 border-dashed"
+                  >
+                    <p className="flex items-center justify-start flex-1 space-x-2 truncate">
+                      <span className="opacity-70">{fld.order}.</span>
+                      <span className="font-medium">{fld.name}</span>
+                      <span className="text-xs opacity-70">({fld.type})</span>:
+                    </p>
+                    <select
+                      className="flex-shrink-0 rounded-sm outline-none bg-gray-50 active:outline-none focus:ring-2 focus:outline-none focus:ring-blue-500 h-7"
+                      onChange={(e) => handleChangeFormField(e, fld)}
+                      value={fld.index}
+                    >
+                      {[{ index: -1, label: '---' }, ...headers].map((h) => (
+                        <option value={h.index} key={h.index}>
+                          {h.label}
+                        </option>
+                      ))}
+                    </select>
+                  </li>
+                ))}
+            </ol>
+          </section>
         ) : (
           <Document
             file={pdfFile}

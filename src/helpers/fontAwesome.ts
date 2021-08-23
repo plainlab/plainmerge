@@ -8,6 +8,8 @@ import {
   faEllipsisV,
   faList,
   faPlus,
+  faSearch,
+  faTimesCircle,
 } from '@fortawesome/free-solid-svg-icons';
 
 library.add(
@@ -19,5 +21,7 @@ library.add(
   faTrashAlt,
   faAlignRight,
   faAlignCenter,
-  faAlignLeft
+  faAlignLeft,
+  faSearch,
+  faTimesCircle
 );
