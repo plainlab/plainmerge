@@ -25,7 +25,7 @@ For Windows, macOS & Linux: https://github.com/plainlab/plainmerge/releases
 
 ## Buy
 
-For Windows & macOS: https://plainlab.gumroad.com/l/plainmerge
+https://plainlab.gumroad.com/l/plainmerge
 
 ---
 
