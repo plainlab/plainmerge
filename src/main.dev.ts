@@ -221,7 +221,8 @@ const savePdf = async (params: RenderPdfState) => {
       combinePdf,
       canvasData,
       canvasWidth,
-      formData
+      formData,
+      (o) => mainWindow?.webContents.send('render-progress', o)
     );
 
     if (created > 0 && Notification.isSupported()) {
@@ -285,7 +286,8 @@ const previewPdf = async (params: RenderPdfState) => {
       combinePdf,
       canvasData,
       canvasWidth,
-      formData || {}
+      formData || {},
+      (o) => mainWindow?.webContents.send('render-progress', o)
     );
     openPdf(filePath);
   } catch (e) {
