@@ -449,7 +449,7 @@ const PdfEditor = () => {
 
             {progressPage !== progressTotal ? (
               <p className="text-red-500">
-                Render page {progressPage} of {progressTotal}
+                Render PDF {progressPage} of {progressTotal}
               </p>
             ) : null}
 
