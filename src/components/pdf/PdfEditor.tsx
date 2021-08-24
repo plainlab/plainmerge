@@ -94,6 +94,9 @@ const PdfEditor = () => {
   const [headers, setHeaders] = useState<Header[]>([]);
   const [combinePdf, setCombinePdf] = useState(true);
 
+  const [progressPage, setProgressPage] = useState(0);
+  const [progressTotal, setProgressTotal] = useState(0);
+
   const loadExcelFile = async (fp: string) => {
     // Read headers
     const workbook = XLSX.readFile(fp, { sheetRows: 1 });
@@ -258,6 +261,11 @@ const PdfEditor = () => {
 
   ipcRenderer.on('keydown', (_event, key) => {
     handleKeyDown(key);
+  });
+
+  ipcRenderer.on('render-progress', (_event, p) => {
+    setProgressPage(p.page);
+    setProgressTotal(p.total);
   });
 
   const handleChangeFormField = (e: any, fld: FieldType) => {
@@ -435,9 +443,16 @@ const PdfEditor = () => {
           </section>
 
           <section className="flex items-center justify-between space-x-2">
-            {process.env.PAID ? null : (
+            {progressPage === progressTotal && !process.env.PAID ? (
               <p className="text-red-500">Trial limit: 10 PDFs</p>
-            )}
+            ) : null}
+
+            {progressPage !== progressTotal ? (
+              <p className="text-red-500">
+                Render page {progressPage} of {progressTotal}
+              </p>
+            ) : null}
+
             <button
               type="button"
               className="btn"

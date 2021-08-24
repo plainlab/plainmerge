@@ -284,7 +284,8 @@ const renderPdf = async (
   combinePdf: boolean,
   canvasData?: CanvasObjects,
   canvasWidth?: number,
-  formData?: FormMap
+  formData?: FormMap,
+  updateProgress?: (o: any) => void
 ) => {
   const pdfBuff = await readFile(pdfFile);
   let pdfDoc = await PDFDocument.load(pdfBuff);
@@ -315,6 +316,13 @@ const renderPdf = async (
     );
 
     newPages.forEach((p) => newDoc.addPage(p));
+
+    if (updateProgress) {
+      updateProgress({
+        page: i + 1,
+        total: rows.length,
+      });
+    }
 
     if (!combinePdf) {
       const pdfBytes = await newDoc.save();
