@@ -21,11 +21,15 @@
 
 ## Try
 
-For Windows, macOS & Linux: https://github.com/plainlab/plainmerge/releases
+Download page: https://github.com/plainlab/plainmerge/releases
+
+- macOS: Get `.dmg` file, open it and drag the app into Applications folder, for M1 mac: get `arm64.dmg` file instead.
+- Windows: Get `.exe` file and open it to install.
+- Linux: Get `.AppImage` file to install, for ARM laptop: get `arm64.AppImage` file instead.
 
 ## Buy
 
-https://plainlab.gumroad.com/l/plainmerge
+Download page: https://plainlab.gumroad.com/l/plainmerge
 
 ---
 
