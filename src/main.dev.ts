@@ -227,15 +227,17 @@ const savePdf = async (params: RenderPdfState) => {
 
     if (created > 0 && Notification.isSupported()) {
       new Notification({
-        title: 'Mail merged successfully',
-        body: `Created ${created} merged file${created === 1 ? '' : 's'}`,
+        title: 'Merge successfully',
+        body: `Create ${created} merged file${created === 1 ? '' : 's'}`,
       }).show();
     }
   } catch (e) {
+    dialog.showErrorBox('Merge failed', e.message);
+
     console.error(e);
     if (Notification.isSupported()) {
       new Notification({
-        title: 'Mail merged failed',
+        title: 'Merge failed',
         body: 'Check your Excel and PDF files again',
       }).show();
     }
@@ -291,10 +293,12 @@ const previewPdf = async (params: RenderPdfState) => {
     );
     openPdf(filePath);
   } catch (e) {
+    dialog.showErrorBox('Preview failed', e.message);
+
     console.error(e);
     if (Notification.isSupported()) {
       new Notification({
-        title: 'Mail merge preview failed',
+        title: 'Preview failed',
         body: 'Check your Excel and PDF files again',
       }).show();
     }
