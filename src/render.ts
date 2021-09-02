@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-loop-func */
 /* eslint-disable no-await-in-loop */
 import { Rect, Textbox } from 'fabric/fabric-impl';
@@ -29,21 +30,21 @@ interface MyTextbox extends Textbox {
 }
 export interface CanvasObjects {
   objects: [MyTextbox | Rect];
+  clientWidth: number;
 }
 
 export interface RenderPdfState {
   pdfFile: string;
   excelFile: string;
   combinePdf: boolean;
-  pageNumber: number;
-  canvasData?: CanvasObjects;
-  canvasWidth?: number;
+  canvasData?: CanvasMap;
   formData?: FormMap;
 }
 
 type FontMap = Record<string, PDFFont>;
 type RowMap = Record<number, string>;
 type FormMap = Record<string, number>;
+type CanvasMap = Record<number, CanvasObjects>;
 
 function hexToRgb(hex: string) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -193,15 +194,14 @@ const renderPage = async (
   page: PDFPage,
   pdfDoc: PDFDocument,
   cachedFonts: FontMap,
-  canvasData?: CanvasObjects,
-  canvasWidth?: number
+  canvasData?: CanvasObjects
 ) => {
-  if (!canvasData || !canvasWidth) {
+  if (!canvasData) {
     return;
   }
 
   const { width, height } = page.getSize();
-  const ratio = width / canvasWidth;
+  const ratio = width / canvasData.clientWidth;
 
   for (let i = 0; i < canvasData.objects.length; i += 1) {
     const obj = canvasData.objects[i];
@@ -278,12 +278,10 @@ export const loadForm = async (filename: string) => {
 const renderPdf = async (
   output: string,
   pdfFile: string,
-  pageIndex: number,
   excelFile: string,
   rowsLimit: number,
   combinePdf: boolean,
-  canvasData?: CanvasObjects,
-  canvasWidth?: number,
+  canvasData?: CanvasMap,
   formData?: FormMap,
   updateProgress?: (o: any) => void
 ) => {
@@ -294,22 +292,28 @@ const renderPdf = async (
 
   const rows: RowMap[] = readFirstSheet(excelFile, rowsLimit);
   for (let i = 0; i < rows.length; i += 1) {
-    // Render all with form
+    // Step 1: Render pages with form
     renderForm(rows[i], formData, pdfDoc.getForm());
 
-    // Render 1 page with canvas for now
-    // TODO: support multiple
-    const page = pdfDoc.getPage(pageIndex);
-    await renderPage(
-      rows[i],
-      page,
-      pdfDoc,
-      cachedFonts,
-      canvasData,
-      canvasWidth
-    );
+    // Step 2: Render pages with canvas for now
+    if (canvasData) {
+      await Promise.all(
+        pdfDoc.getPageIndices().map(async (pageIndex) => {
+          if (canvasData[pageIndex + 1]) {
+            const page = pdfDoc.getPage(pageIndex);
+            await renderPage(
+              rows[i],
+              page,
+              pdfDoc,
+              cachedFonts,
+              canvasData[pageIndex + 1]
+            );
+          }
+        })
+      );
+    }
 
-    // Copy to new pdf, load and save will remove fields, but retain value
+    // Step 3: Copy to new pdf, load and save will remove fields, but retain value
     const newPages = await newDoc.copyPages(
       await PDFDocument.load(await pdfDoc.save()),
       pdfDoc.getPageIndices()

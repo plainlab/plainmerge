@@ -33,14 +33,14 @@ interface MyTextbox extends Textbox {
 }
 export interface CanvasObjects {
   objects: [MyTextbox | Rect];
+  clientWidth: number;
 }
 export interface RenderPdfState {
   pdfFile: string;
   excelFile: string;
   combinePdf: boolean;
   pageNumber: number;
-  canvasData?: CanvasObjects;
-  canvasWidth?: number;
+  canvasData?: Record<number, CanvasObjects>;
   formData?: Record<string, number>;
 }
 
@@ -151,22 +151,34 @@ const PdfEditor = () => {
   };
 
   const getCurrentState = (): RenderPdfState => {
+    let canvasData = currentState?.canvasData;
+    if (parentRef.current) {
+      canvasData = {
+        ...canvasData,
+        [pageNumber]: {
+          ...editor?.dump(),
+          clientWidth: parentRef.current.clientWidth,
+        },
+      };
+    }
+
+    const formData = formFields.reduce(
+      (p, c) => ({ ...p, [c.name]: c.index }),
+      {}
+    );
+
     return {
       pdfFile,
       pageNumber,
       excelFile,
       combinePdf,
-      formData: formFields.reduce((p, c) => ({ ...p, [c.name]: c.index }), {}),
-
-      // FIXME: Better way to keep canvas state?
-      canvasData: parentRef.current ? editor?.dump() : currentState?.canvasData,
-      canvasWidth: parentRef.current
-        ? parentRef.current?.clientWidth
-        : currentState?.canvasWidth,
+      formData,
+      canvasData,
     };
   };
 
   const handleRender = async (action: string) => {
+    setProgressTotal(pages);
     await ipcRenderer.invoke(action, getCurrentState());
   };
 
@@ -182,6 +194,18 @@ const PdfEditor = () => {
     setNumPages(doc.numPages);
     setPageNumber((currentState && currentState.pageNumber) || 1);
     setPageLoaded(true);
+  };
+
+  const handleClickNext = () => {
+    setCurrentState(getCurrentState());
+    setShowCanvas(false);
+    setPageNumber(pageNumber + 1);
+  };
+
+  const handleClickBack = () => {
+    setCurrentState(getCurrentState());
+    setShowCanvas(false);
+    setPageNumber(pageNumber - 1);
   };
 
   const handlePageLoadSuccess = () => {
@@ -259,15 +283,6 @@ const PdfEditor = () => {
     }
   };
 
-  ipcRenderer.on('keydown', (_event, key) => {
-    handleKeyDown(key);
-  });
-
-  ipcRenderer.on('render-progress', (_event, p) => {
-    setProgressPage(p.page);
-    setProgressTotal(p.total);
-  });
-
   const handleChangeFormField = (e: any, fld: FieldType) => {
     setFormFields(
       formFields.map((f) =>
@@ -321,8 +336,13 @@ const PdfEditor = () => {
   }, [currentState]);
 
   useEffect(() => {
-    if (editor && currentState && currentState.canvasData) {
-      editor.load(currentState.canvasData);
+    if (
+      editor &&
+      currentState &&
+      currentState.canvasData &&
+      currentState.canvasData[pageNumber]
+    ) {
+      editor.load(currentState.canvasData[pageNumber]);
     }
   }, [editor]);
 
@@ -368,6 +388,17 @@ const PdfEditor = () => {
       setFormFields(formFields.map((f) => ({ ...f, show: true })));
     }
   }, [searchField]);
+
+  useEffect(() => {
+    ipcRenderer.on('keydown', (_event, key) => {
+      handleKeyDown(key);
+    });
+
+    ipcRenderer.on('render-progress', (_event, p) => {
+      setProgressPage(p.page);
+      setProgressTotal(p.total);
+    });
+  }, []);
 
   return (
     <div className="flex flex-1">
@@ -691,7 +722,7 @@ const PdfEditor = () => {
             {pageNumber > 1 ? (
               <button
                 type="button"
-                onClick={() => setPageNumber(pageNumber - 1)}
+                onClick={handleClickBack}
                 className="btn-link"
               >
                 &lt; Back
@@ -705,7 +736,7 @@ const PdfEditor = () => {
             {pageNumber < numPages ? (
               <button
                 type="button"
-                onClick={() => setPageNumber(pageNumber + 1)}
+                onClick={handleClickNext}
                 className="btn-link"
               >
                 Next &gt;

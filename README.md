@@ -10,10 +10,11 @@
 ## Features
 
 - Drag & drop fields to customize PDF template
+- Support native PDF forms
+- Edit mutiple-pages PDFs
 - Support `.xlsx`, `.xls`, `.ods` Excel files
-- Support PDF forms
 - Work offline
-- Cross-platform
+- Cross-platform: macOS, Windows, Linux
 
 ## Demo
 
