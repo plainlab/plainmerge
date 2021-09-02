@@ -11,10 +11,10 @@
 
 - Drag & drop fields to customize PDF template
 - Support native PDF forms
-- Edit mutiple-pages PDFs
-- Support `.xlsx`, `.xls`, `.ods` Excel files
-- Work offline
+- Edit multiple-pages PDFs
+- Support `.xlsx`, `.xls` and `.ods` Excel files
 - Cross-platform: macOS, Windows, Linux
+- Work offline
 
 ## Demo
 
