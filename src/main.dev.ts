@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint global-require: off, no-console: off */
 
 /**
@@ -195,15 +196,7 @@ const savePdf = async (params: RenderPdfState) => {
     console.error(e);
   }
 
-  const {
-    pdfFile,
-    pageNumber,
-    excelFile,
-    combinePdf,
-    canvasData,
-    canvasWidth,
-    formData,
-  } = params;
+  const { pdfFile, excelFile, combinePdf, canvasData, formData } = params;
 
   const file = await dialog.showSaveDialog({
     filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
@@ -215,12 +208,10 @@ const savePdf = async (params: RenderPdfState) => {
     const created = await renderPdf(
       file.filePath,
       pdfFile,
-      pageNumber - 1,
       excelFile,
       getRowsLimit(),
       combinePdf,
       canvasData,
-      canvasWidth,
       formData,
       (o) => mainWindow?.webContents.send('render-progress', o)
     );
@@ -264,32 +255,25 @@ const previewPdf = async (params: RenderPdfState) => {
     console.error(e);
   }
 
-  const {
-    pdfFile,
-    pageNumber,
-    excelFile,
-    combinePdf,
-    canvasData,
-    canvasWidth,
-    formData,
-  } = params;
+  const { pdfFile, excelFile, combinePdf, canvasData, formData } = params;
 
   try {
     const filePath = path.join(
       app.getPath('temp'),
       `preview-${path.basename(pdfFile)}`
     );
+    const updateProgress = (o: any) =>
+      mainWindow?.webContents.send('render-progress', o);
+
     await renderPdf(
       filePath,
       pdfFile,
-      pageNumber - 1,
       excelFile,
       1,
       combinePdf,
       canvasData,
-      canvasWidth,
       formData || {},
-      (o) => mainWindow?.webContents.send('render-progress', o)
+      updateProgress
     );
     openPdf(filePath);
   } catch (e) {
