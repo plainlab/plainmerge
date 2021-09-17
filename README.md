@@ -42,7 +42,11 @@ Download page: https://github.com/plainlab/plainmerge/releases
 
 ## Buy
 
-Download page: https://plainlab.gumroad.com/l/plainmerge
+We believe in a transparent and fair world, so we open-source the app and
+you get a trial version for your personal use, but if you find the app helpful,
+please make a purchase.
+
+Purchase page: https://plainlab.gumroad.com/l/plainmerge
 
 ---
 
