@@ -1,11 +1,23 @@
 [![Test](https://github.com/plainlab/plainmerge/actions/workflows/test.yml/badge.svg)](https://github.com/plainlab/plainmerge/actions/workflows/test.yml)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/plainlab/plainmerge)
 
-# PlainMerge
-
-> An offline PDF mail merger
+# PlainMerge - An offline PDF mail merger
 
 ![PlainMerge](./.erb/assets/plainmerge.png)
+
+
+## What is this?
+
+Imagine you want to fill a PDF form for 100 employees with a specific name and address
+for each of them. You got the PDF form and all your staff information in an Excel file.
+
+That's when PlainMerge helps.
+
+After inputting an Excel file and a PDF file, you can drag and drop the Excel headers
+into arbitrary positions or match them with native PDF form fields, and then PlainMerge
+will generate multiple PDFs for you based on rows in the Excel file.
+
+You got 100 different PDFs for each employee now.
 
 ## Features
 
