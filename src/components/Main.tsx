@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet';
 
 import MergeList from './merge/MergeList';
 import MergeNew from './merge/MergeNew';
+import Config from './config/Config';
 
 const allRoutes = [
   {
@@ -18,6 +19,12 @@ const allRoutes = [
     path: '/list',
     name: 'Mail merge list',
     Component: MergeList,
+  },
+  {
+    icon: <FontAwesomeIcon icon="cog" />,
+    path: '/config',
+    name: 'Configuration',
+    Component: Config,
   },
 ];
 

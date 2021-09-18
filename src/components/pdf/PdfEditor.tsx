@@ -94,6 +94,7 @@ const PdfEditor = () => {
   const [headers, setHeaders] = useState<Header[]>([]);
   const [combinePdf, setCombinePdf] = useState(true);
 
+  const [showProgress, setShowProgress] = useState(false);
   const [progressPage, setProgressPage] = useState(0);
   const [progressTotal, setProgressTotal] = useState(0);
 
@@ -150,6 +151,10 @@ const PdfEditor = () => {
     }
   };
 
+  const handleEmail = async () => {
+    console.log('objecht');
+  };
+
   const getCurrentState = (): RenderPdfState => {
     let canvasData = currentState?.canvasData;
     if (parentRef.current) {
@@ -178,9 +183,11 @@ const PdfEditor = () => {
   };
 
   const handleRender = async (action: string) => {
+    setProgressPage(0);
     setProgressTotal(pages);
+    setShowProgress(true);
     await ipcRenderer.invoke(action, getCurrentState());
-    setProgressTotal(progressPage);
+    setShowProgress(false);
   };
 
   const handleSave = async () => {
@@ -475,11 +482,11 @@ const PdfEditor = () => {
           </section>
 
           <section className="flex items-center justify-between space-x-2">
-            {progressPage === progressTotal && !process.env.PAID ? (
+            {!showProgress && !process.env.PAID ? (
               <p className="text-red-500">Trial limit: 10 records</p>
             ) : null}
 
-            {progressPage !== progressTotal ? (
+            {showProgress ? (
               <p className="text-red-500">
                 Process record {progressPage} of {progressTotal}
               </p>
@@ -499,7 +506,15 @@ const PdfEditor = () => {
               onClick={handleSave}
               disabled={!pdfFile || !excelFile}
             >
-              Mail merge...
+              Save files...
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={handleEmail}
+              disabled={!pdfFile || !excelFile}
+            >
+              Send emails...
             </button>
           </section>
         </span>

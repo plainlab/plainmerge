@@ -5,7 +5,9 @@ import {
   faAlignCenter,
   faAlignLeft,
   faAlignRight,
+  faCog,
   faEllipsisV,
+  faExternalLinkAlt,
   faList,
   faPlus,
   faSearch,
@@ -23,5 +25,7 @@ library.add(
   faAlignCenter,
   faAlignLeft,
   faSearch,
+  faCog,
+  faExternalLinkAlt,
   faTimesCircle
 );

@@ -29,8 +29,15 @@ import crypto from 'crypto';
 import glob from 'glob';
 import nodeurl from 'url';
 import { promisify } from 'util';
+
 import MenuBuilder from './menu';
 import renderPdf, { loadForm, RenderPdfState } from './render';
+import { SmtpConfigType } from './email';
+
+const Store = require('electron-store');
+const nodemailer = require('nodemailer');
+
+const store = new Store();
 
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
@@ -98,7 +105,9 @@ const createWindow = async () => {
   mainWindow = new BrowserWindow({
     show: false,
     width: 1024,
+    minWidth: 1024,
     height: 728,
+    minHeight: 728,
     icon: getAssetPath('icon.png'),
     webPreferences: {
       nodeIntegration: true,
@@ -361,6 +370,33 @@ ipcMain.handle('remove-history', async (_event, { filename }) => {
 
 ipcMain.handle('load-form', async (_event, { filename }) => {
   return loadForm(filename);
+});
+
+ipcMain.handle('get-store', async (_event, { key }) => {
+  return store.get(key);
+});
+
+ipcMain.handle('set-store', async (_event, { key, value }) => {
+  return store.set(key, value);
+});
+
+ipcMain.handle('validate-smtp', async (_event, config: SmtpConfigType) => {
+  console.log(config);
+  const transporter = nodemailer.createTransport({
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
+    auth: {
+      user: config.user,
+      pass: config.pass,
+    },
+  });
+  const result = new Promise((resolve) => {
+    transporter.verify((error: any) => {
+      resolve(error);
+    });
+  });
+  return result;
 });
 
 /**

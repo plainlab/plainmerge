@@ -16,7 +16,7 @@
   }
 
   input {
-    @apply focus:outline-none;
+    @apply focus:outline-none border-b;
   }
 
   textarea {
