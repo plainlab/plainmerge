@@ -180,6 +180,7 @@ const PdfEditor = () => {
   const handleRender = async (action: string) => {
     setProgressTotal(pages);
     await ipcRenderer.invoke(action, getCurrentState());
+    setProgressTotal(progressPage);
   };
 
   const handleSave = async () => {
@@ -475,12 +476,12 @@ const PdfEditor = () => {
 
           <section className="flex items-center justify-between space-x-2">
             {progressPage === progressTotal && !process.env.PAID ? (
-              <p className="text-red-500">Trial limit: 10 PDFs</p>
+              <p className="text-red-500">Trial limit: 10 records</p>
             ) : null}
 
             {progressPage !== progressTotal ? (
               <p className="text-red-500">
-                Render PDF {progressPage} of {progressTotal}
+                Process record {progressPage} of {progressTotal}
               </p>
             ) : null}
 
