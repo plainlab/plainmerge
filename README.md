@@ -1,10 +1,9 @@
 [![Test](https://github.com/plainlab/plainmerge/actions/workflows/test.yml/badge.svg)](https://github.com/plainlab/plainmerge/actions/workflows/test.yml)
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/plainlab/plainmerge)
+[![Release](https://img.shields.io/github/v/release/plainlab/plainmerge)](https://github.com/plainlab/plainmerge/releases)
 
 # PlainMerge - An offline PDF mail merger
 
 ![PlainMerge](./.erb/assets/plainmerge.png)
-
 
 ## What is this?
 
@@ -25,6 +24,7 @@ You got 100 different PDFs for each employee now.
 - Support native PDF forms
 - Edit multiple-pages PDFs
 - Support `.xlsx`, `.xls` and `.ods` Excel files
+- Send out emails with PDF attachment
 - Cross-platform: macOS, Windows, Linux
 - Work offline
 

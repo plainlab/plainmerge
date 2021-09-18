@@ -87,6 +87,9 @@ const installExtensions = async () => {
     .catch(console.log);
 };
 
+const windowWidth = 1200;
+const windowHeight = 800;
+
 const createWindow = async () => {
   if (
     process.env.NODE_ENV === 'development' ||
@@ -105,10 +108,10 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1024,
-    minWidth: 1024,
-    height: 728,
-    minHeight: 728,
+    width: windowWidth,
+    minWidth: windowWidth,
+    height: windowHeight,
+    minHeight: windowHeight,
     icon: getAssetPath('icon.png'),
     webPreferences: {
       nodeIntegration: true,
@@ -169,9 +172,16 @@ const getPathHash = (filename: string) => {
 };
 
 const saveConfig = async (params: RenderPdfState) => {
-  await writeFile(getPathHash(params.pdfFile), JSON.stringify(params), {
+  const p = getPathHash(params.pdfFile);
+  await writeFile(p, JSON.stringify(params), {
     encoding: 'utf8',
   });
+  return p;
+};
+
+const loadConfig = async (fp: string) => {
+  const data = await readFile(fp, { encoding: 'utf8' });
+  return JSON.parse(data);
 };
 
 const loadConfigs = async () => {
@@ -184,8 +194,7 @@ const loadConfigs = async () => {
   const configList = await Promise.all(
     list.map(async (fp: string) => {
       try {
-        const data = await readFile(fp, { encoding: 'utf8' });
-        return JSON.parse(data);
+        return loadConfig(fp);
       } catch (e) {
         return null;
       }
@@ -203,7 +212,8 @@ const savePdf = async (params: RenderPdfState) => {
   try {
     await saveConfig(params);
   } catch (e) {
-    console.error(e);
+    dialog.showErrorBox('Save config error', e.message);
+    return;
   }
 
   const { pdfFile, excelFile, combinePdf, canvasData, formData } = params;
@@ -262,7 +272,8 @@ const previewPdf = async (params: RenderPdfState) => {
   try {
     await saveConfig(params);
   } catch (e) {
-    console.error(e);
+    dialog.showErrorBox('Save config error', e.message);
+    return;
   }
 
   const { pdfFile, excelFile, combinePdf, canvasData, formData } = params;
@@ -299,21 +310,23 @@ const previewPdf = async (params: RenderPdfState) => {
   }
 };
 
-const createEmailWindow = () => {
+const createEmailWindow = (configPath: string) => {
   if (emailWindow == null) {
     emailWindow = new BrowserWindow({
       parent: mainWindow || undefined,
-      width: 1024,
-      height: 768,
-      minWidth: 1024,
-      minHeight: 768,
+      width: windowHeight,
+      height: windowHeight,
+      minWidth: windowHeight,
+      minHeight: windowHeight,
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: false,
       },
     });
   }
-  emailWindow.loadURL(`file://${__dirname}/index.html?page=email`);
+  emailWindow.loadURL(
+    `file://${__dirname}/index.html?page=email&config=${configPath}`
+  );
 
   emailWindow.webContents.on('did-finish-load', () => {
     emailWindow?.show();
@@ -325,22 +338,24 @@ const createEmailWindow = () => {
 };
 
 const emailPdf = async (params: RenderPdfState) => {
+  let p = '';
   try {
-    await saveConfig(params);
+    p = await saveConfig(params);
   } catch (e) {
-    console.error(e);
+    dialog.showErrorBox('Save config error', e.message);
+    return;
   }
 
   const smtpConfig = store.get('smtp-config');
   if (!smtpConfig || !smtpConfig.valid) {
     dialog.showErrorBox(
       'Invalid SMTP configuration',
-      'Please config and validate SMTP first'
+      'Please configure and validate the SMTP server first.'
     );
     return;
   }
 
-  createEmailWindow();
+  createEmailWindow(encodeURIComponent(p));
 };
 
 /**
@@ -394,6 +409,15 @@ ipcMain.handle('save-config', async (_event, params: RenderPdfState) => {
     await saveConfig(params);
   } catch (e) {
     console.error(e);
+  }
+});
+
+ipcMain.handle('load-config', async (_event, fp: string) => {
+  try {
+    return loadConfig(fp);
+  } catch (e) {
+    dialog.showErrorBox('Load config error', e.message);
+    return null;
   }
 });
 

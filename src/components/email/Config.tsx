@@ -113,7 +113,7 @@ const Config = () => {
   }, []);
 
   return (
-    <section className="flex flex-col items-start justify-between h-full p-8 space-y-8">
+    <section className="flex flex-col items-start justify-between flex-1 p-8 space-y-8 bg-gray-50">
       <section className="flex flex-col items-start justify-center space-y-8">
         <h2 className="text-lg font-bold leading-8">SMTP configuration</h2>
 
@@ -193,7 +193,7 @@ const Config = () => {
         </section>
       </section>
 
-      <section className="opacity-50">
+      <section className="space-y-2 opacity-30">
         <h3 className="font-bold leading-8">Gmail SMTP example:</h3>
         <div className="flex">
           <p className="w-32">Host:</p>

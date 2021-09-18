@@ -15,11 +15,14 @@
     @apply focus:outline-none;
   }
 
-  input {
-    @apply focus:outline-none border-b;
+  input[type='text'],
+  input[type='number'],
+  input[type='password'],
+  textarea {
+    @apply rounded focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-inset border-b py-1 px-2;
   }
 
-  textarea {
-    @apply rounded focus:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-inset;
+  select {
+    @apply rounded outline-none active:outline-none focus:ring-2 focus:outline-none focus:ring-blue-500 border-b py-1 px-2;
   }
 }

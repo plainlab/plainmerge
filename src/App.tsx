@@ -15,7 +15,11 @@ export default function App() {
           render={(props) => {
             const { search } = props.location;
             const so = qs.parse(search.slice(search.lastIndexOf('?') + 1));
-            return so.page === 'email' ? <Email /> : <Main />;
+            return so.page === 'email' ? (
+              <Email configPath={decodeURIComponent(so.config as string)} />
+            ) : (
+              <Main />
+            );
           }}
         />
       </Switch>

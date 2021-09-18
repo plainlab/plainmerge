@@ -1,5 +1,5 @@
+/* eslint-disable no-alert */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-console */
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { DragEventHandler, useEffect, useRef, useState } from 'react';
@@ -9,7 +9,6 @@ import { ipcRenderer } from 'electron';
 // @ts-ignore
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
 import { StandardFonts, StandardFontValues } from 'pdf-lib';
-import XLSX from 'xlsx';
 import { Rect, Textbox } from 'fabric/fabric-impl';
 import { TwitterPicker } from 'react-color';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -18,10 +17,10 @@ import { useLocation } from 'react-router-dom';
 
 import { IconName } from '@fortawesome/fontawesome-svg-core';
 import { FabricJSCanvas, useFabricJSEditor } from '../fabric/Canvas';
+import { readExcelMeta } from '../utils/excel';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
-
-interface Header {
+export interface DataHeader {
   index: number;
   label: string;
 }
@@ -43,14 +42,6 @@ export interface RenderPdfState {
   canvasData?: Record<number, CanvasObjects>;
   formData?: Record<string, number>;
 }
-
-const getRowsLimit = () => {
-  if (process.env.PAID) {
-    return 100_000;
-  }
-  return 10;
-};
-
 interface FieldType {
   type: string;
   name: string;
@@ -91,7 +82,7 @@ const PdfEditor = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [pages, setPages] = useState(1);
-  const [headers, setHeaders] = useState<Header[]>([]);
+  const [headers, setHeaders] = useState<DataHeader[]>([]);
   const [combinePdf, setCombinePdf] = useState(true);
 
   const [showProgress, setShowProgress] = useState(false);
@@ -99,29 +90,9 @@ const PdfEditor = () => {
   const [progressTotal, setProgressTotal] = useState(0);
 
   const loadExcelFile = async (fp: string) => {
-    // Read headers
-    const workbook = XLSX.readFile(fp, { sheetRows: 1 });
-    const sheetsList = workbook.SheetNames;
-    const firstSheet = workbook.Sheets[sheetsList[0]];
-    const sheetData = XLSX.utils.sheet_to_json(firstSheet, {
-      header: 1,
-      defval: '',
-      blankrows: true,
-    });
-    const labels = sheetData.map((_v, _i, array) => array).flat(2);
-    setHeaders(
-      labels.map((label, index) => ({
-        index,
-        label: label as string,
-      }))
-    );
-
-    if (firstSheet['!fullref']) {
-      const range = XLSX.utils.decode_range(firstSheet['!fullref']);
-      const rows = range.e.r - range.s.r;
-      const rowLimit = getRowsLimit();
-      setPages(Math.min(rows, rowLimit));
-    }
+    const { firstRow, rowCount } = await readExcelMeta(fp);
+    setHeaders(firstRow);
+    setPages(rowCount);
   };
 
   const handleOpenPdf = async () => {
@@ -221,7 +192,7 @@ const PdfEditor = () => {
   };
 
   const handleDocumentError = (e: any) => {
-    console.error(e);
+    alert(e.message);
   };
 
   const handleDrop: DragEventHandler = (e) => {
@@ -320,7 +291,7 @@ const PdfEditor = () => {
 
   useEffect(() => {
     if (excelFile) {
-      loadExcelFile(excelFile).catch(console.error);
+      loadExcelFile(excelFile).catch((e) => alert(e.message));
     }
   }, [excelFile]);
 
@@ -374,7 +345,7 @@ const PdfEditor = () => {
             })
           )
         )
-        .catch(console.error);
+        .catch((e) => alert(e.message));
     }
   }, [pdfFile]);
 
@@ -527,7 +498,6 @@ const PdfEditor = () => {
               }`}
             >
               <select
-                className="rounded-sm outline-none active:outline-none focus:ring-2 focus:outline-none focus:ring-blue-500"
                 onChange={(e) => setFontFamily(e.target.value)}
                 value={fontFamily}
                 disabled={!selectedObject}
@@ -540,7 +510,7 @@ const PdfEditor = () => {
               </select>
 
               <select
-                className="w-10 rounded-sm outline-none active:outline-none focus:ring-2 focus:outline-none focus:ring-blue-500"
+                className="w-14"
                 onChange={(e) =>
                   setFontSize(parseInt(e.target.value, 10) || 16)
                 }
