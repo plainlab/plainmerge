@@ -151,10 +151,6 @@ const PdfEditor = () => {
     }
   };
 
-  const handleEmail = async () => {
-    console.log('objecht');
-  };
-
   const getCurrentState = (): RenderPdfState => {
     let canvasData = currentState?.canvasData;
     if (parentRef.current) {
@@ -196,6 +192,10 @@ const PdfEditor = () => {
 
   const handlePreview = async () => {
     await handleRender('preview-pdf');
+  };
+
+  const handleEmail = async () => {
+    await handleRender('email-pdf');
   };
 
   const handleDocumentLoadSuccess = (doc: { numPages: number }) => {
@@ -487,7 +487,7 @@ const PdfEditor = () => {
             ) : null}
 
             {showProgress ? (
-              <p className="text-red-500">
+              <p className="text-green-500">
                 Process record {progressPage} of {progressTotal}
               </p>
             ) : null}

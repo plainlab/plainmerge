@@ -1,9 +1,8 @@
 /* eslint-disable no-nested-ternary */
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ipcRenderer } from 'electron';
 import React, { useEffect, useState } from 'react';
 
-interface ConfigType {
+export interface SmtpConfigType {
   host: string;
   port: number;
   secure: boolean;
@@ -13,7 +12,7 @@ interface ConfigType {
   error: Error | null;
 }
 
-const defaultConfig = {
+const defaultSmtpConfig = {
   host: 'smtp.gmail.com',
   port: 587,
   secure: false,
@@ -23,16 +22,18 @@ const defaultConfig = {
   error: null,
 };
 
+export const SmtpConfigKey = 'smtp-config';
+
 const Config = () => {
   const [validating, setValidating] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [config, setConfig] = useState<ConfigType>(defaultConfig);
+  const [config, setConfig] = useState<SmtpConfigType>(defaultSmtpConfig);
 
   const loadConfig = () => {
     ipcRenderer
-      .invoke('get-store', { key: 'config' })
+      .invoke('get-store', { key: SmtpConfigKey })
       .then((c) => {
-        const conf = c || defaultConfig;
+        const conf = c || defaultSmtpConfig;
         setConfig({ ...conf, error: null });
         setLoaded(true);
         return null;
@@ -40,9 +41,9 @@ const Config = () => {
       .catch(console.error);
   };
 
-  const saveConfig = (c: ConfigType) => {
+  const saveConfig = (c: SmtpConfigType) => {
     ipcRenderer
-      .invoke('set-store', { key: 'config', value: c })
+      .invoke('set-store', { key: SmtpConfigKey, value: c })
       .catch(console.error);
   };
 
@@ -112,7 +113,7 @@ const Config = () => {
   }, []);
 
   return (
-    <section className="flex flex-col items-start justify-between h-full p-8">
+    <section className="flex flex-col items-start justify-between h-full p-8 space-y-8">
       <section className="flex flex-col items-start justify-center space-y-8">
         <h2 className="text-lg font-bold leading-8">SMTP configuration</h2>
 

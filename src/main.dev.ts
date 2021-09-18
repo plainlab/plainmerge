@@ -60,6 +60,7 @@ export default class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
+let emailWindow: BrowserWindow | null = null;
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -298,6 +299,50 @@ const previewPdf = async (params: RenderPdfState) => {
   }
 };
 
+const createEmailWindow = () => {
+  if (emailWindow == null) {
+    emailWindow = new BrowserWindow({
+      parent: mainWindow || undefined,
+      width: 1024,
+      height: 768,
+      minWidth: 1024,
+      minHeight: 768,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+      },
+    });
+  }
+  emailWindow.loadURL(`file://${__dirname}/index.html?page=email`);
+
+  emailWindow.webContents.on('did-finish-load', () => {
+    emailWindow?.show();
+  });
+
+  emailWindow.on('closed', () => {
+    emailWindow = null;
+  });
+};
+
+const emailPdf = async (params: RenderPdfState) => {
+  try {
+    await saveConfig(params);
+  } catch (e) {
+    console.error(e);
+  }
+
+  const smtpConfig = store.get('smtp-config');
+  if (!smtpConfig || !smtpConfig.valid) {
+    dialog.showErrorBox(
+      'Invalid SMTP configuration',
+      'Please config and validate SMTP first'
+    );
+    return;
+  }
+
+  createEmailWindow();
+};
+
 /**
  * Handlers events from React
  */
@@ -358,6 +403,10 @@ ipcMain.handle('preview-pdf', async (_event, params: RenderPdfState) => {
 
 ipcMain.handle('save-pdf', async (_event, params: RenderPdfState) => {
   return savePdf(params);
+});
+
+ipcMain.handle('email-pdf', async (_event, params: RenderPdfState) => {
+  return emailPdf(params);
 });
 
 ipcMain.handle('load-history', async () => {
