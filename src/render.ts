@@ -23,7 +23,6 @@ import { promisify } from 'util';
 import XLSX from 'xlsx';
 
 const readFile = promisify(fs.readFile);
-const writeFile = promisify(fs.writeFile);
 
 interface MyTextbox extends Textbox {
   index: number;
@@ -41,8 +40,8 @@ export interface RenderPdfState {
   formData?: FormMap;
 }
 
+export type RowMap = Record<number, string>;
 type FontMap = Record<string, PDFFont>;
-type RowMap = Record<number, string>;
 type FormMap = Record<string, number>;
 type CanvasMap = Record<number, CanvasObjects>;
 
@@ -281,6 +280,11 @@ const renderPdf = async (
   excelFile: string,
   rowsLimit: number,
   combinePdf: boolean,
+  saveFile: (
+    filename: string,
+    content: Uint8Array,
+    rowData?: RowMap
+  ) => Promise<void>,
   canvasData?: CanvasMap,
   formData?: FormMap,
   updateProgress?: (o: any) => void
@@ -336,7 +340,7 @@ const renderPdf = async (
       const fileEx = outputs[outputs.length - 1];
       const outputName = `${baseName}-${i + 1}.${fileEx}`;
 
-      await writeFile(outputName, pdfBytes);
+      await saveFile(outputName, pdfBytes, rows[i]);
 
       // Reset
       newDoc = await PDFDocument.create();
@@ -349,7 +353,7 @@ const renderPdf = async (
 
   if (combinePdf) {
     const pdfBytes = await newDoc.save();
-    await writeFile(output, pdfBytes);
+    await saveFile(output, pdfBytes);
     return 1;
   }
 

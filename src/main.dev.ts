@@ -31,7 +31,7 @@ import nodeurl from 'url';
 import { promisify } from 'util';
 
 import MenuBuilder from './menu';
-import renderPdf, { loadForm, RenderPdfState } from './render';
+import renderPdf, { loadForm, RenderPdfState, RowMap } from './render';
 import { SmtpConfigType } from './email';
 
 const Store = require('electron-store');
@@ -231,6 +231,7 @@ const savePdf = async (params: RenderPdfState) => {
       excelFile,
       getRowsLimit(),
       combinePdf,
+      writeFile,
       canvasData,
       formData,
       (o) => mainWindow?.webContents.send('render-progress', o)
@@ -292,6 +293,7 @@ const previewPdf = async (params: RenderPdfState) => {
       excelFile,
       1,
       combinePdf,
+      writeFile,
       canvasData,
       formData || {},
       updateProgress
@@ -358,6 +360,92 @@ const emailPdf = async (params: RenderPdfState) => {
   createEmailWindow(encodeURIComponent(p));
 };
 
+const sendMailFunc = (
+  fromEmail: string,
+  emailIndex: number,
+  subjectTemplate: string,
+  bodyTemplate: string
+) => async (fileName: string, buffer: Uint8Array, rowData?: RowMap) => {
+  const config = store.get('smtp-config');
+
+  const transporter = nodemailer.createTransport({
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
+    auth: {
+      user: config.user,
+      pass: config.pass,
+    },
+  });
+
+  const searchValue = /\[\[(.*?)\]\]/g;
+  const replaceValue = (_a: string, b: string) =>
+    (rowData && rowData[JSON.parse(b).id]) || '';
+
+  const subject = subjectTemplate.replace(searchValue, replaceValue).trim();
+  const text = bodyTemplate.replace(searchValue, replaceValue).trim();
+
+  const message = {
+    from: fromEmail,
+    to: rowData && rowData[emailIndex],
+    subject,
+    text,
+    html: text,
+    attachments: [
+      {
+        filename: path.basename(fileName),
+        content: buffer,
+      },
+    ],
+  };
+
+  await transporter.sendMail(message);
+};
+
+const sendPdfMail = async (
+  fromEmail: string,
+  emailIndex: number,
+  subjectTemplate: string,
+  bodyTemplate: string,
+  params: RenderPdfState
+) => {
+  const { pdfFile, excelFile, canvasData, formData } = params;
+  try {
+    const output = path.join(app.getPath('temp'), path.basename(pdfFile));
+
+    const created = await renderPdf(
+      output,
+      pdfFile,
+      excelFile,
+      getRowsLimit(),
+      false,
+      sendMailFunc(fromEmail, emailIndex, subjectTemplate, bodyTemplate),
+      canvasData,
+      formData,
+      (o) => emailWindow?.webContents.send('email-progress', o)
+    );
+
+    if (created > 0 && Notification.isSupported()) {
+      new Notification({
+        title: 'Send emails successfully',
+        body: `Sent out ${created} email${created === 1 ? '' : 's'}`,
+      }).show();
+    }
+
+    emailWindow?.close();
+  } catch (e) {
+    dialog.showErrorBox('Send email failed', e.message);
+
+    console.error(e);
+    if (Notification.isSupported()) {
+      new Notification({
+        title: 'Send email failed',
+        body: 'Check your Excel and PDF files again',
+      }).show();
+    }
+  }
+};
+
 /**
  * Handlers events from React
  */
@@ -408,7 +496,7 @@ ipcMain.handle('save-config', async (_event, params: RenderPdfState) => {
   try {
     await saveConfig(params);
   } catch (e) {
-    console.error(e);
+    dialog.showErrorBox('Save config error', e.message);
   }
 });
 
@@ -454,7 +542,6 @@ ipcMain.handle('set-store', async (_event, { key, value }) => {
 });
 
 ipcMain.handle('validate-smtp', async (_event, config: SmtpConfigType) => {
-  console.log(config);
   const transporter = nodemailer.createTransport({
     host: config.host,
     port: config.port,
@@ -471,6 +558,26 @@ ipcMain.handle('validate-smtp', async (_event, config: SmtpConfigType) => {
   });
   return result;
 });
+
+ipcMain.handle(
+  'send-email',
+  async (
+    _event,
+    fromEmail: string,
+    emailIndex: number,
+    subjectTemplate: string,
+    bodyTemplate: string,
+    params: RenderPdfState
+  ) => {
+    return sendPdfMail(
+      fromEmail,
+      emailIndex,
+      subjectTemplate,
+      bodyTemplate,
+      params
+    );
+  }
+);
 
 /**
  * Add event listeners...

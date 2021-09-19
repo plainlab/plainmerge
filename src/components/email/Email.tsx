@@ -6,6 +6,7 @@ import Tags from '@yaireo/tagify/dist/react.tagify';
 
 import { DataHeader, RenderPdfState } from '../pdf/PdfEditor';
 import { readExcelMeta } from '../utils/excel';
+import { SmtpConfigKey, SmtpConfigType } from './Config';
 
 type EmailProps = {
   configPath: string;
@@ -19,6 +20,8 @@ const Email = ({ configPath }: EmailProps) => {
   const [sending, setSending] = useState(false);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
+  const [fromEmail, setFromEmail] = useState('');
+  const [emailIndex, setEmailIndex] = useState(0);
 
   const tagSettings = {
     pattern: /@/,
@@ -34,7 +37,12 @@ const Email = ({ configPath }: EmailProps) => {
     const { firstRow, rowCount } = await readExcelMeta(pdfConf.excelFile);
     setHeaders(firstRow);
     setEmailCount(rowCount);
-    setPdfConfig(pdfConfig);
+    setPdfConfig(pdfConf);
+
+    const smtpConf: SmtpConfigType = await ipcRenderer.invoke('get-store', {
+      key: SmtpConfigKey,
+    });
+    setFromEmail(smtpConf.user);
   };
 
   const handleChangeSubject = (e: any) => {
@@ -47,16 +55,24 @@ const Email = ({ configPath }: EmailProps) => {
 
   const handleSendEmail = async () => {
     setSending(true);
-    for (let i = 0; i < emailCount; i += 1) {
-      setProgress(i + 1);
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    await ipcRenderer.invoke(
+      'send-email',
+      fromEmail,
+      emailIndex,
+      subject,
+      body,
+      pdfConfig
+    );
     setSending(false);
   };
 
   useEffect(() => {
     loadConfig(configPath).catch((e) => alert(e.message));
+
+    ipcRenderer.on('email-progress', (_event, p) => {
+      setProgress(p.page);
+      setEmailCount(p.total);
+    });
   }, []);
 
   return (
@@ -67,12 +83,28 @@ const Email = ({ configPath }: EmailProps) => {
         <section className="flex flex-col w-full space-y-6">
           <div className="flex flex-col space-y-2">
             <section className="flex items-center justify-between space-y-2">
-              <p className="font-bold">Recipients:</p>
+              <p className="font-bold">From:</p>
+            </section>
+            <input
+              type="text"
+              value={fromEmail}
+              onChange={(e) => setFromEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="flex flex-col space-y-2">
+            <section className="flex items-center justify-between space-y-2">
+              <p className="font-bold">To:</p>
               <small className="text-xs text-right opacity-70">
                 Choose a column that contains email address for sending
               </small>
             </section>
-            <select className="px-1 py-2">
+            <select
+              className="px-1 py-2"
+              value={emailIndex}
+              onChange={(e) => setEmailIndex(parseInt(e.target.value, 10))}
+            >
               {headers.map(({ index, label }) => (
                 <option key={index} value={index}>
                   {label}
@@ -129,7 +161,7 @@ const Email = ({ configPath }: EmailProps) => {
               ? `Sending email ${progress} of ${emailCount}`
               : `${emailCount} email${
                   emailCount === 1 ? '' : 's'
-                } will be sent out with ${emailCount} different PDF${
+                } will be sent out with ${emailCount} merged PDF${
                   emailCount === 1 ? '' : 's'
                 }`}
           </p>
@@ -137,7 +169,7 @@ const Email = ({ configPath }: EmailProps) => {
             className="btn"
             type="button"
             onClick={handleSendEmail}
-            disabled={sending}
+            disabled={!subject || !body || !fromEmail || sending}
           >
             Send
           </button>

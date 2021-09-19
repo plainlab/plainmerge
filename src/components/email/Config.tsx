@@ -147,7 +147,7 @@ const Config = () => {
             />
           </div>
           <div className="flex items-center justify-start">
-            <p className="w-32 font-bold">Email:</p>
+            <p className="w-32 font-bold">User:</p>
             <input
               type="text"
               placeholder="email"
@@ -208,7 +208,7 @@ const Config = () => {
           <p className="font-medium">Uncheck</p>
         </div>
         <div className="flex">
-          <p className="w-32">Email:</p>
+          <p className="w-32">User:</p>
           <p className="font-medium">your@email.com</p>
         </div>
         <div className="flex">
