@@ -45,11 +45,14 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
     setRowsCount(rowCount);
     setPdfConfig(pdfConf);
 
-    const smtpConf: SmtpConfigType = await ipcRenderer.invoke('get-store', {
-      key: SmtpConfigKey,
-    });
-    setFromEmail(smtpConf.user);
-    setSmtpValid(smtpConf.valid);
+    const smtpConf: SmtpConfigType | undefined = await ipcRenderer.invoke(
+      'get-store',
+      {
+        key: SmtpConfigKey,
+      }
+    );
+    setFromEmail(smtpConf ? smtpConf.user : '');
+    setSmtpValid(smtpConf ? smtpConf.valid : false);
   };
 
   const handleChangeSubject = (e: any) => {
