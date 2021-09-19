@@ -1,5 +1,5 @@
+/* eslint-disable no-alert */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-console */
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { DragEventHandler, useEffect, useRef, useState } from 'react';
@@ -9,7 +9,6 @@ import { ipcRenderer } from 'electron';
 // @ts-ignore
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
 import { StandardFonts, StandardFontValues } from 'pdf-lib';
-import XLSX from 'xlsx';
 import { Rect, Textbox } from 'fabric/fabric-impl';
 import { TwitterPicker } from 'react-color';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -18,10 +17,10 @@ import { useLocation } from 'react-router-dom';
 
 import { IconName } from '@fortawesome/fontawesome-svg-core';
 import { FabricJSCanvas, useFabricJSEditor } from '../fabric/Canvas';
+import { readExcelMeta } from '../utils/excel';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
-
-interface Header {
+export interface DataHeader {
   index: number;
   label: string;
 }
@@ -43,14 +42,6 @@ export interface RenderPdfState {
   canvasData?: Record<number, CanvasObjects>;
   formData?: Record<string, number>;
 }
-
-const getRowsLimit = () => {
-  if (process.env.PAID) {
-    return 100_000;
-  }
-  return 10;
-};
-
 interface FieldType {
   type: string;
   name: string;
@@ -90,37 +81,12 @@ const PdfEditor = () => {
   const parentRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const [pages, setPages] = useState(1);
-  const [headers, setHeaders] = useState<Header[]>([]);
+  const [headers, setHeaders] = useState<DataHeader[]>([]);
   const [combinePdf, setCombinePdf] = useState(true);
 
-  const [progressPage, setProgressPage] = useState(0);
-  const [progressTotal, setProgressTotal] = useState(0);
-
   const loadExcelFile = async (fp: string) => {
-    // Read headers
-    const workbook = XLSX.readFile(fp, { sheetRows: 1 });
-    const sheetsList = workbook.SheetNames;
-    const firstSheet = workbook.Sheets[sheetsList[0]];
-    const sheetData = XLSX.utils.sheet_to_json(firstSheet, {
-      header: 1,
-      defval: '',
-      blankrows: true,
-    });
-    const labels = sheetData.map((_v, _i, array) => array).flat(2);
-    setHeaders(
-      labels.map((label, index) => ({
-        index,
-        label: label as string,
-      }))
-    );
-
-    if (firstSheet['!fullref']) {
-      const range = XLSX.utils.decode_range(firstSheet['!fullref']);
-      const rows = range.e.r - range.s.r;
-      const rowLimit = getRowsLimit();
-      setPages(Math.min(rows, rowLimit));
-    }
+    const { firstRow } = await readExcelMeta(fp);
+    setHeaders(firstRow);
   };
 
   const handleOpenPdf = async () => {
@@ -177,17 +143,12 @@ const PdfEditor = () => {
     };
   };
 
-  const handleRender = async (action: string) => {
-    setProgressTotal(pages);
-    await ipcRenderer.invoke(action, getCurrentState());
-  };
-
-  const handleSave = async () => {
-    await handleRender('save-pdf');
+  const handleMailMerge = async () => {
+    await ipcRenderer.invoke('mail-merge', getCurrentState());
   };
 
   const handlePreview = async () => {
-    await handleRender('preview-pdf');
+    await ipcRenderer.invoke('preview-pdf', getCurrentState());
   };
 
   const handleDocumentLoadSuccess = (doc: { numPages: number }) => {
@@ -213,7 +174,7 @@ const PdfEditor = () => {
   };
 
   const handleDocumentError = (e: any) => {
-    console.error(e);
+    alert(e.message);
   };
 
   const handleDrop: DragEventHandler = (e) => {
@@ -312,7 +273,7 @@ const PdfEditor = () => {
 
   useEffect(() => {
     if (excelFile) {
-      loadExcelFile(excelFile).catch(console.error);
+      loadExcelFile(excelFile).catch((e) => alert(e.message));
     }
   }, [excelFile]);
 
@@ -366,7 +327,7 @@ const PdfEditor = () => {
             })
           )
         )
-        .catch(console.error);
+        .catch((e) => alert(e.message));
     }
   }, [pdfFile]);
 
@@ -392,11 +353,6 @@ const PdfEditor = () => {
   useEffect(() => {
     ipcRenderer.on('keydown', (_event, key) => {
       handleKeyDown(key);
-    });
-
-    ipcRenderer.on('render-progress', (_event, p) => {
-      setProgressPage(p.page);
-      setProgressTotal(p.total);
     });
   }, []);
 
@@ -474,14 +430,8 @@ const PdfEditor = () => {
           </section>
 
           <section className="flex items-center justify-between space-x-2">
-            {progressPage === progressTotal && !process.env.PAID ? (
-              <p className="text-red-500">Trial limit: 10 PDFs</p>
-            ) : null}
-
-            {progressPage !== progressTotal ? (
-              <p className="text-red-500">
-                Render PDF {progressPage} of {progressTotal}
-              </p>
+            {!process.env.PAID ? (
+              <p className="text-red-500">Trial limit: 10 records</p>
             ) : null}
 
             <button
@@ -495,7 +445,7 @@ const PdfEditor = () => {
             <button
               type="button"
               className="btn"
-              onClick={handleSave}
+              onClick={handleMailMerge}
               disabled={!pdfFile || !excelFile}
             >
               Mail merge...
@@ -511,7 +461,6 @@ const PdfEditor = () => {
               }`}
             >
               <select
-                className="rounded-sm outline-none active:outline-none focus:ring-2 focus:outline-none focus:ring-blue-500"
                 onChange={(e) => setFontFamily(e.target.value)}
                 value={fontFamily}
                 disabled={!selectedObject}
@@ -524,7 +473,7 @@ const PdfEditor = () => {
               </select>
 
               <select
-                className="w-10 rounded-sm outline-none active:outline-none focus:ring-2 focus:outline-none focus:ring-blue-500"
+                className="w-14"
                 onChange={(e) =>
                   setFontSize(parseInt(e.target.value, 10) || 16)
                 }
@@ -594,36 +543,6 @@ const PdfEditor = () => {
                   className="text-red-600"
                 />
               </button>
-            </section>
-
-            <section className="flex items-center space-x-2">
-              <p>Merge into:</p>
-              <label htmlFor="combined" className="flex items-center space-x-1">
-                <input
-                  type="radio"
-                  className="rounded"
-                  name="seperator"
-                  id="combined"
-                  checked={combinePdf}
-                  onChange={() => setCombinePdf(true)}
-                />
-                <p>1 PDF</p>
-              </label>
-              {pages > 1 ? (
-                <label
-                  htmlFor="separated"
-                  className="flex items-center space-x-1"
-                >
-                  <input
-                    type="radio"
-                    name="seperator"
-                    id="separated"
-                    checked={!combinePdf}
-                    onChange={() => setCombinePdf(false)}
-                  />
-                  <p>{pages} PDFs</p>
-                </label>
-              ) : null}
             </section>
           </section>
         ) : null}

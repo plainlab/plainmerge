@@ -1,10 +1,11 @@
-import React from 'react';
-import { NavLink, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { NavLink, Route, useHistory, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Helmet } from 'react-helmet';
 
 import MergeList from './merge/MergeList';
 import MergeNew from './merge/MergeNew';
+import Config from './email/Config';
 
 const allRoutes = [
   {
@@ -14,14 +15,29 @@ const allRoutes = [
     Component: MergeNew,
   },
   {
-    icon: <FontAwesomeIcon icon="list" />,
+    icon: <FontAwesomeIcon icon="history" />,
     path: '/list',
     name: 'Mail merge list',
     Component: MergeList,
   },
+  {
+    icon: <FontAwesomeIcon icon="cog" />,
+    path: '/config',
+    name: 'Configuration',
+    Component: Config,
+  },
 ];
 
 const Main = () => {
+  const history = useHistory();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname.endsWith('index.html')) {
+      history.push('/new');
+    }
+  }, []);
+
   return (
     <div className="absolute inset-0 flex">
       {/* Left sidebar */}

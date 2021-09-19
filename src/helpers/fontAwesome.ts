@@ -5,8 +5,10 @@ import {
   faAlignCenter,
   faAlignLeft,
   faAlignRight,
+  faCog,
   faEllipsisV,
-  faList,
+  faExternalLinkAlt,
+  faHistory,
   faPlus,
   faSearch,
   faTimesCircle,
@@ -15,7 +17,7 @@ import {
 library.add(
   fab,
   faFilePdf,
-  faList,
+  faHistory,
   faPlus,
   faEllipsisV,
   faTrashAlt,
@@ -23,5 +25,7 @@ library.add(
   faAlignCenter,
   faAlignLeft,
   faSearch,
+  faCog,
+  faExternalLinkAlt,
   faTimesCircle
 );

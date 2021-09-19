@@ -23,7 +23,6 @@ import { promisify } from 'util';
 import XLSX from 'xlsx';
 
 const readFile = promisify(fs.readFile);
-const writeFile = promisify(fs.writeFile);
 
 interface MyTextbox extends Textbox {
   index: number;
@@ -37,12 +36,13 @@ export interface RenderPdfState {
   pdfFile: string;
   excelFile: string;
   combinePdf: boolean;
+  outputPdf: string;
   canvasData?: CanvasMap;
   formData?: FormMap;
 }
 
+export type RowMap = Record<number, string>;
 type FontMap = Record<string, PDFFont>;
-type RowMap = Record<number, string>;
 type FormMap = Record<string, number>;
 type CanvasMap = Record<number, CanvasObjects>;
 
@@ -281,9 +281,14 @@ const renderPdf = async (
   excelFile: string,
   rowsLimit: number,
   combinePdf: boolean,
+  saveFile: (
+    filename: string,
+    content: Uint8Array,
+    rowData?: RowMap
+  ) => Promise<void>,
+  updateProgress: (page: number, total: number, rowData?: RowMap) => void,
   canvasData?: CanvasMap,
-  formData?: FormMap,
-  updateProgress?: (o: any) => void
+  formData?: FormMap
 ) => {
   const pdfBuff = await readFile(pdfFile);
   let pdfDoc = await PDFDocument.load(pdfBuff);
@@ -320,13 +325,7 @@ const renderPdf = async (
     );
 
     newPages.forEach((p) => newDoc.addPage(p));
-
-    if (updateProgress) {
-      updateProgress({
-        page: i + 1,
-        total: rows.length,
-      });
-    }
+    updateProgress(i + 1, rows.length, rows[i]);
 
     if (!combinePdf) {
       const pdfBytes = await newDoc.save();
@@ -336,7 +335,7 @@ const renderPdf = async (
       const fileEx = outputs[outputs.length - 1];
       const outputName = `${baseName}-${i + 1}.${fileEx}`;
 
-      await writeFile(outputName, pdfBytes);
+      await saveFile(outputName, pdfBytes, rows[i]);
 
       // Reset
       newDoc = await PDFDocument.create();
@@ -349,7 +348,7 @@ const renderPdf = async (
 
   if (combinePdf) {
     const pdfBytes = await newDoc.save();
-    await writeFile(output, pdfBytes);
+    await saveFile(output, pdfBytes);
     return 1;
   }
 
