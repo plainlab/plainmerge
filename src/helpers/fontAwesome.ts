@@ -8,7 +8,7 @@ import {
   faCog,
   faEllipsisV,
   faExternalLinkAlt,
-  faList,
+  faHistory,
   faPlus,
   faSearch,
   faTimesCircle,
@@ -17,7 +17,7 @@ import {
 library.add(
   fab,
   faFilePdf,
-  faList,
+  faHistory,
   faPlus,
   faEllipsisV,
   faTrashAlt,

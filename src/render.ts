@@ -36,6 +36,7 @@ export interface RenderPdfState {
   pdfFile: string;
   excelFile: string;
   combinePdf: boolean;
+  outputPdf: string;
   canvasData?: CanvasMap;
   formData?: FormMap;
 }
@@ -285,9 +286,9 @@ const renderPdf = async (
     content: Uint8Array,
     rowData?: RowMap
   ) => Promise<void>,
+  updateProgress: (page: number, total: number, rowData?: RowMap) => void,
   canvasData?: CanvasMap,
-  formData?: FormMap,
-  updateProgress?: (o: any) => void
+  formData?: FormMap
 ) => {
   const pdfBuff = await readFile(pdfFile);
   let pdfDoc = await PDFDocument.load(pdfBuff);
@@ -324,13 +325,7 @@ const renderPdf = async (
     );
 
     newPages.forEach((p) => newDoc.addPage(p));
-
-    if (updateProgress) {
-      updateProgress({
-        page: i + 1,
-        total: rows.length,
-      });
-    }
+    updateProgress(i + 1, rows.length, rows[i]);
 
     if (!combinePdf) {
       const pdfBytes = await newDoc.save();

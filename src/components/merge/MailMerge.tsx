@@ -6,22 +6,28 @@ import Tags from '@yaireo/tagify/dist/react.tagify';
 
 import { DataHeader, RenderPdfState } from '../pdf/PdfEditor';
 import { readExcelMeta } from '../utils/excel';
-import { SmtpConfigKey, SmtpConfigType } from './Config';
+import { SmtpConfigKey, SmtpConfigType } from '../email/Config';
 
-type EmailProps = {
+type MailMergeProps = {
   configPath: string;
 };
 
-const Email = ({ configPath }: EmailProps) => {
+const MailMerge = ({ configPath }: MailMergeProps) => {
   const [pdfConfig, setPdfConfig] = useState<RenderPdfState>();
   const [headers, setHeaders] = useState<DataHeader[]>([]);
-  const [emailCount, setEmailCount] = useState(0);
-  const [progress, setProgress] = useState(0);
+  const [rowsCount, setRowsCount] = useState(0);
+  const [emailProgress, setEmailProgress] = useState(0);
+  const [email, setEmail] = useState('');
+  const [fileProgress, setFileProgress] = useState(0);
   const [sending, setSending] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [fromEmail, setFromEmail] = useState('');
   const [emailIndex, setEmailIndex] = useState(0);
+  const [combinePdf, setCombinePdf] = useState(true);
+  const [outputPdf, setOutputPdf] = useState('');
+  const [smtpValid, setSmtpValid] = useState(false);
 
   const tagSettings = {
     pattern: /@/,
@@ -36,13 +42,14 @@ const Email = ({ configPath }: EmailProps) => {
     const pdfConf: RenderPdfState = await ipcRenderer.invoke('load-config', fp);
     const { firstRow, rowCount } = await readExcelMeta(pdfConf.excelFile);
     setHeaders(firstRow);
-    setEmailCount(rowCount);
+    setRowsCount(rowCount);
     setPdfConfig(pdfConf);
 
     const smtpConf: SmtpConfigType = await ipcRenderer.invoke('get-store', {
       key: SmtpConfigKey,
     });
     setFromEmail(smtpConf.user);
+    setSmtpValid(smtpConf.valid);
   };
 
   const handleChangeSubject = (e: any) => {
@@ -51,6 +58,15 @@ const Email = ({ configPath }: EmailProps) => {
 
   const handleChangeBody = (e: any) => {
     setBody(e.detail.value);
+  };
+
+  const handleChooseFile = () => {
+    const name = 'PDF file';
+    const extensions = ['pdf'];
+    ipcRenderer
+      .invoke('save-path', { name, extensions })
+      .then((p) => setOutputPdf(p))
+      .catch((e) => alert(e.message));
   };
 
   const handleSendEmail = async () => {
@@ -66,19 +82,119 @@ const Email = ({ configPath }: EmailProps) => {
     setSending(false);
   };
 
+  const handleSavePdf = async () => {
+    setSaving(true);
+    const conf = { ...pdfConfig, combinePdf, outputPdf };
+    await ipcRenderer.invoke('save-pdf', conf);
+    setSaving(false);
+  };
+
   useEffect(() => {
     loadConfig(configPath).catch((e) => alert(e.message));
 
     ipcRenderer.on('email-progress', (_event, p) => {
-      setProgress(p.page);
-      setEmailCount(p.total);
+      setEmailProgress(p.page);
+      setRowsCount(p.total);
+      setEmail(p.email);
+    });
+
+    ipcRenderer.on('save-progress', (_event, p) => {
+      setFileProgress(p.page);
+      setRowsCount(p.total);
     });
   }, []);
 
   return (
     <section className="absolute inset-0 flex flex-col items-start justify-between p-8 space-y-8 overflow-x-hidden overflow-y-auto bg-gray-50">
-      <section className="flex flex-col items-start justify-center w-full space-y-8">
-        <h2 className="text-lg font-bold leading-8">Send emails</h2>
+      <section className="flex flex-col items-start justify-center w-full pb-8 space-y-8">
+        <h2 className="w-full text-lg font-bold leading-8 border-b">
+          Save to files
+        </h2>
+
+        <section className="flex flex-col w-full space-y-6">
+          <div className="flex items-center justify-between space-x-2">
+            <p className="font-bold">Save to:</p>
+            <input type="text" value={outputPdf} disabled className="flex-1" />
+            <button type="button" onClick={handleChooseFile} className="btn">
+              Choose...
+            </button>
+          </div>
+
+          <section className="flex items-center space-x-4">
+            <p>Merge into:</p>
+
+            <label htmlFor="combined" className="flex items-center space-x-1">
+              <input
+                type="radio"
+                className="rounded"
+                name="seperator"
+                id="combined"
+                checked={combinePdf}
+                onChange={() => setCombinePdf(true)}
+              />
+              <p>1 PDF</p>
+            </label>
+
+            {rowsCount > 1 ? (
+              <label
+                htmlFor="separated"
+                className="flex items-center space-x-1"
+              >
+                <input
+                  type="radio"
+                  name="seperator"
+                  id="separated"
+                  checked={!combinePdf}
+                  onChange={() => setCombinePdf(false)}
+                />
+                <p>{rowsCount} PDFs</p>
+              </label>
+            ) : null}
+          </section>
+        </section>
+
+        <section className="flex flex-col items-start justify-center space-y-4">
+          <section className="opacity-70">
+            {saving ? (
+              <p className="text-green-500">
+                Process record {fileProgress} of {rowsCount}
+              </p>
+            ) : (
+              <p>
+                {combinePdf
+                  ? `1 PDF`
+                  : `${rowsCount} PDF${rowsCount === 1 ? '' : 's'}`}
+
+                {` of ${rowsCount} record${
+                  rowsCount === 1 ? '' : 's'
+                } will be created`}
+              </p>
+            )}
+          </section>
+          <button
+            className="btn"
+            type="button"
+            onClick={handleSavePdf}
+            disabled={!outputPdf || saving}
+          >
+            Save
+          </button>
+        </section>
+      </section>
+
+      <section className="flex flex-col items-start justify-center w-full pb-8 space-y-8">
+        <section className="w-full space-y-2">
+          <h2 className="w-full text-lg font-bold leading-8 border-b">
+            Send as email attachments
+          </h2>
+
+          {!smtpValid ? (
+            <p className="text-red-500">
+              Invalid SMTP configuration. Please configure and validate SMTP
+              server first.
+            </p>
+          ) : null}
+        </section>
 
         <section className="flex flex-col w-full space-y-6">
           <div className="flex flex-col space-y-2">
@@ -89,6 +205,7 @@ const Email = ({ configPath }: EmailProps) => {
               type="text"
               value={fromEmail}
               onChange={(e) => setFromEmail(e.target.value)}
+              disabled
               required
             />
           </div>
@@ -156,30 +273,32 @@ const Email = ({ configPath }: EmailProps) => {
         </section>
 
         <section className="flex flex-col items-start justify-center mb-10 space-y-4">
-          <p className={sending ? 'text-green-500 p-1' : 'p-1'}>
-            {sending
-              ? `Sending email ${progress} of ${emailCount}`
-              : `${emailCount} email${
-                  emailCount === 1 ? '' : 's'
-                } will be sent out with ${emailCount} merged PDF${
-                  emailCount === 1 ? '' : 's'
-                }`}
-          </p>
+          <section className="opacity-70">
+            {sending ? (
+              <p className="text-green-500">
+                Sending email {emailProgress} of {rowsCount} (to {email})
+              </p>
+            ) : (
+              <p>
+                {rowsCount} email{rowsCount === 1 ? '' : 's'} will be sent out
+              </p>
+            )}
+          </section>
           <button
             className="btn"
             type="button"
             onClick={handleSendEmail}
-            disabled={!subject || !body || !fromEmail || sending}
+            disabled={!subject || !body || !fromEmail || !smtpValid || sending}
           >
             Send
           </button>
         </section>
       </section>
       <Helmet>
-        <title>Send PDFs as email attachments</title>
+        <title>Mail merge</title>
       </Helmet>
     </section>
   );
 };
 
-export default Email;
+export default MailMerge;

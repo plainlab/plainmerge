@@ -15,7 +15,7 @@ const allRoutes = [
     Component: MergeNew,
   },
   {
-    icon: <FontAwesomeIcon icon="list" />,
+    icon: <FontAwesomeIcon icon="history" />,
     path: '/list',
     name: 'Mail merge list',
     Component: MergeList,

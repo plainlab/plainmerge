@@ -4,7 +4,7 @@ import qs from 'qs';
 import Main from './components/Main';
 import './App.global.css';
 import './helpers/fontAwesome';
-import Email from './components/email/Email';
+import MailMerge from './components/merge/MailMerge';
 
 export default function App() {
   return (
@@ -15,8 +15,8 @@ export default function App() {
           render={(props) => {
             const { search } = props.location;
             const so = qs.parse(search.slice(search.lastIndexOf('?') + 1));
-            return so.page === 'email' ? (
-              <Email configPath={decodeURIComponent(so.config as string)} />
+            return so.page === 'merge' ? (
+              <MailMerge configPath={decodeURIComponent(so.config as string)} />
             ) : (
               <Main />
             );

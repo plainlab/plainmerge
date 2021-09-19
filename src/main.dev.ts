@@ -60,7 +60,7 @@ export default class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
-let emailWindow: BrowserWindow | null = null;
+let mailMergeWindow: BrowserWindow | null = null;
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -87,8 +87,8 @@ const installExtensions = async () => {
     .catch(console.log);
 };
 
-const windowWidth = 1200;
-const windowHeight = 800;
+const windowWidth = 1024;
+const windowHeight = 728;
 
 const createWindow = async () => {
   if (
@@ -216,51 +216,66 @@ const savePdf = async (params: RenderPdfState) => {
     return;
   }
 
-  const { pdfFile, excelFile, combinePdf, canvasData, formData } = params;
-
-  const file = await dialog.showSaveDialog({
-    filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
-  });
-
-  if (!file || !file.filePath) return;
+  const {
+    pdfFile,
+    excelFile,
+    combinePdf,
+    canvasData,
+    formData,
+    outputPdf,
+  } = params;
 
   try {
     const created = await renderPdf(
-      file.filePath,
+      outputPdf,
       pdfFile,
       excelFile,
       getRowsLimit(),
       combinePdf,
       writeFile,
+      (page, total) =>
+        mailMergeWindow?.webContents.send('save-progress', { page, total }),
       canvasData,
-      formData,
-      (o) => mainWindow?.webContents.send('render-progress', o)
+      formData
     );
 
-    if (created > 0 && Notification.isSupported()) {
-      new Notification({
-        title: 'Merge successfully',
-        body: `Create ${created} merged file${created === 1 ? '' : 's'}`,
-      }).show();
+    if (created > 0) {
+      if (Notification.isSupported()) {
+        new Notification({
+          title: 'Mail merge success!',
+          body: `Created ${created} PDF${
+            created === 1 ? '' : 's'
+          } successfully`,
+        }).show();
+      }
+
+      if (mailMergeWindow) {
+        dialog.showMessageBox(mailMergeWindow, {
+          type: 'info',
+          title: 'Mail merge success!',
+          message: `Created ${created} PDF${
+            created === 1 ? '' : 's'
+          } successfully`,
+        });
+      }
     }
   } catch (e) {
-    dialog.showErrorBox('Merge failed', e.message);
-
-    console.error(e);
     if (Notification.isSupported()) {
       new Notification({
-        title: 'Merge failed',
+        title: 'Mail merge failed',
         body: 'Check your Excel and PDF files again',
       }).show();
     }
+
+    dialog.showErrorBox('Merge failed', e.message);
   }
 };
 
 const openPdf = (pdfPath: string) => {
   const win = new BrowserWindow({
     title: 'Preview',
-    width: 512,
-    height: 768,
+    width: windowHeight,
+    height: windowHeight,
     webPreferences: {
       plugins: true,
       contextIsolation: false,
@@ -277,28 +292,25 @@ const previewPdf = async (params: RenderPdfState) => {
     return;
   }
 
-  const { pdfFile, excelFile, combinePdf, canvasData, formData } = params;
+  const { pdfFile, excelFile, canvasData, formData } = params;
 
   try {
-    const filePath = path.join(
+    const output = path.join(
       app.getPath('temp'),
       `preview-${path.basename(pdfFile)}`
     );
-    const updateProgress = (o: any) =>
-      mainWindow?.webContents.send('render-progress', o);
-
     await renderPdf(
-      filePath,
+      output,
       pdfFile,
       excelFile,
       1,
-      combinePdf,
+      true,
       writeFile,
+      () => {},
       canvasData,
-      formData || {},
-      updateProgress
+      formData || {}
     );
-    openPdf(filePath);
+    openPdf(output);
   } catch (e) {
     dialog.showErrorBox('Preview failed', e.message);
 
@@ -312,9 +324,9 @@ const previewPdf = async (params: RenderPdfState) => {
   }
 };
 
-const createEmailWindow = (configPath: string) => {
-  if (emailWindow == null) {
-    emailWindow = new BrowserWindow({
+const createMailMergeWindow = (configPath: string) => {
+  if (mailMergeWindow == null) {
+    mailMergeWindow = new BrowserWindow({
       parent: mainWindow || undefined,
       width: windowHeight,
       height: windowHeight,
@@ -326,20 +338,20 @@ const createEmailWindow = (configPath: string) => {
       },
     });
   }
-  emailWindow.loadURL(
-    `file://${__dirname}/index.html?page=email&config=${configPath}`
+  mailMergeWindow.loadURL(
+    `file://${__dirname}/index.html?page=merge&config=${configPath}`
   );
 
-  emailWindow.webContents.on('did-finish-load', () => {
-    emailWindow?.show();
+  mailMergeWindow.webContents.on('did-finish-load', () => {
+    mailMergeWindow?.show();
   });
 
-  emailWindow.on('closed', () => {
-    emailWindow = null;
+  mailMergeWindow.on('closed', () => {
+    mailMergeWindow = null;
   });
 };
 
-const emailPdf = async (params: RenderPdfState) => {
+const mailMerge = async (params: RenderPdfState) => {
   let p = '';
   try {
     p = await saveConfig(params);
@@ -347,17 +359,7 @@ const emailPdf = async (params: RenderPdfState) => {
     dialog.showErrorBox('Save config error', e.message);
     return;
   }
-
-  const smtpConfig = store.get('smtp-config');
-  if (!smtpConfig || !smtpConfig.valid) {
-    dialog.showErrorBox(
-      'Invalid SMTP configuration',
-      'Please configure and validate the SMTP server first.'
-    );
-    return;
-  }
-
-  createEmailWindow(encodeURIComponent(p));
+  createMailMergeWindow(encodeURIComponent(p));
 };
 
 const sendMailFunc = (
@@ -402,6 +404,18 @@ const sendMailFunc = (
   await transporter.sendMail(message);
 };
 
+const emailProgressFunc = (emailIndex: number) => (
+  page: number,
+  total: number,
+  rowData?: RowMap
+) => {
+  mailMergeWindow?.webContents.send('email-progress', {
+    page,
+    total,
+    email: rowData && rowData[emailIndex],
+  });
+};
+
 const sendPdfMail = async (
   fromEmail: string,
   emailIndex: number,
@@ -420,21 +434,31 @@ const sendPdfMail = async (
       getRowsLimit(),
       false,
       sendMailFunc(fromEmail, emailIndex, subjectTemplate, bodyTemplate),
+      emailProgressFunc(emailIndex),
       canvasData,
-      formData,
-      (o) => emailWindow?.webContents.send('email-progress', o)
+      formData
     );
 
-    if (created > 0 && Notification.isSupported()) {
-      new Notification({
-        title: 'Send emails successfully',
-        body: `Sent out ${created} email${created === 1 ? '' : 's'}`,
-      }).show();
-    }
+    if (created > 0) {
+      if (Notification.isSupported()) {
+        new Notification({
+          title: 'Sent out emails success!',
+          body: `Sent out ${created} email${created === 1 ? '' : 's'}`,
+        }).show();
+      }
 
-    emailWindow?.close();
+      if (mailMergeWindow) {
+        dialog.showMessageBox(mailMergeWindow, {
+          type: 'info',
+          title: 'Sent out emails success!',
+          message: `Sent out ${created} email${
+            created === 1 ? '' : 's'
+          } successfully`,
+        });
+      }
+    }
   } catch (e) {
-    dialog.showErrorBox('Send email failed', e.message);
+    dialog.showErrorBox('Send emails failed', e.message);
 
     console.error(e);
     if (Notification.isSupported()) {
@@ -492,6 +516,16 @@ ipcMain.handle(
   }
 );
 
+ipcMain.handle(
+  'save-path',
+  async (_event: IpcMainInvokeEvent, { name, extensions }) => {
+    const file = await dialog.showSaveDialog({
+      filters: [{ name, extensions }],
+    });
+    return file && file.filePath;
+  }
+);
+
 ipcMain.handle('save-config', async (_event, params: RenderPdfState) => {
   try {
     await saveConfig(params);
@@ -517,8 +551,8 @@ ipcMain.handle('save-pdf', async (_event, params: RenderPdfState) => {
   return savePdf(params);
 });
 
-ipcMain.handle('email-pdf', async (_event, params: RenderPdfState) => {
-  return emailPdf(params);
+ipcMain.handle('mail-merge', async (_event, params: RenderPdfState) => {
+  return mailMerge(params);
 });
 
 ipcMain.handle('load-history', async () => {
@@ -569,7 +603,16 @@ ipcMain.handle(
     bodyTemplate: string,
     params: RenderPdfState
   ) => {
-    return sendPdfMail(
+    const smtpConfig = store.get('smtp-config');
+    if (!smtpConfig || !smtpConfig.valid) {
+      dialog.showErrorBox(
+        'Invalid SMTP configuration',
+        'Please configure and validate the SMTP server first.'
+      );
+      return;
+    }
+
+    await sendPdfMail(
       fromEmail,
       emailIndex,
       subjectTemplate,

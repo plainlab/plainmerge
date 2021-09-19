@@ -81,18 +81,12 @@ const PdfEditor = () => {
   const parentRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const [pages, setPages] = useState(1);
   const [headers, setHeaders] = useState<DataHeader[]>([]);
   const [combinePdf, setCombinePdf] = useState(true);
 
-  const [showProgress, setShowProgress] = useState(false);
-  const [progressPage, setProgressPage] = useState(0);
-  const [progressTotal, setProgressTotal] = useState(0);
-
   const loadExcelFile = async (fp: string) => {
-    const { firstRow, rowCount } = await readExcelMeta(fp);
+    const { firstRow } = await readExcelMeta(fp);
     setHeaders(firstRow);
-    setPages(rowCount);
   };
 
   const handleOpenPdf = async () => {
@@ -149,24 +143,12 @@ const PdfEditor = () => {
     };
   };
 
-  const handleRender = async (action: string) => {
-    setProgressPage(0);
-    setProgressTotal(pages);
-    setShowProgress(true);
-    await ipcRenderer.invoke(action, getCurrentState());
-    setShowProgress(false);
-  };
-
-  const handleSave = async () => {
-    await handleRender('save-pdf');
+  const handleMailMerge = async () => {
+    await ipcRenderer.invoke('mail-merge', getCurrentState());
   };
 
   const handlePreview = async () => {
-    await handleRender('preview-pdf');
-  };
-
-  const handleEmail = async () => {
-    await handleRender('email-pdf');
+    await ipcRenderer.invoke('preview-pdf', getCurrentState());
   };
 
   const handleDocumentLoadSuccess = (doc: { numPages: number }) => {
@@ -372,11 +354,6 @@ const PdfEditor = () => {
     ipcRenderer.on('keydown', (_event, key) => {
       handleKeyDown(key);
     });
-
-    ipcRenderer.on('render-progress', (_event, p) => {
-      setProgressPage(p.page);
-      setProgressTotal(p.total);
-    });
   }, []);
 
   return (
@@ -453,14 +430,8 @@ const PdfEditor = () => {
           </section>
 
           <section className="flex items-center justify-between space-x-2">
-            {!showProgress && !process.env.PAID ? (
+            {!process.env.PAID ? (
               <p className="text-red-500">Trial limit: 10 records</p>
-            ) : null}
-
-            {showProgress ? (
-              <p className="text-green-500">
-                Process record {progressPage} of {progressTotal}
-              </p>
             ) : null}
 
             <button
@@ -474,18 +445,10 @@ const PdfEditor = () => {
             <button
               type="button"
               className="btn"
-              onClick={handleSave}
+              onClick={handleMailMerge}
               disabled={!pdfFile || !excelFile}
             >
-              Save files...
-            </button>
-            <button
-              type="button"
-              className="btn"
-              onClick={handleEmail}
-              disabled={!pdfFile || !excelFile}
-            >
-              Send emails...
+              Mail merge...
             </button>
           </section>
         </span>
@@ -580,36 +543,6 @@ const PdfEditor = () => {
                   className="text-red-600"
                 />
               </button>
-            </section>
-
-            <section className="flex items-center space-x-2">
-              <p>Merge into:</p>
-              <label htmlFor="combined" className="flex items-center space-x-1">
-                <input
-                  type="radio"
-                  className="rounded"
-                  name="seperator"
-                  id="combined"
-                  checked={combinePdf}
-                  onChange={() => setCombinePdf(true)}
-                />
-                <p>1 PDF</p>
-              </label>
-              {pages > 1 ? (
-                <label
-                  htmlFor="separated"
-                  className="flex items-center space-x-1"
-                >
-                  <input
-                    type="radio"
-                    name="seperator"
-                    id="separated"
-                    checked={!combinePdf}
-                    onChange={() => setCombinePdf(false)}
-                  />
-                  <p>{pages} PDFs</p>
-                </label>
-              ) : null}
             </section>
           </section>
         ) : null}
