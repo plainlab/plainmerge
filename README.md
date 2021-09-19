@@ -20,13 +20,13 @@ You got 100 different PDFs for each employee now.
 
 ## Features
 
-- Drag & drop fields to customize PDF template
-- Support native PDF forms
-- Edit multiple-pages PDFs
-- Support `.xlsx`, `.xls` and `.ods` Excel files
-- Send out emails with PDF attachment
-- Cross-platform: macOS, Windows, Linux
-- Work offline
+- [x] Drag & drop fields to customize PDF template
+- [x] Support native PDF forms
+- [x] Support multiple-pages PDFs
+- [x] Support `.xlsx`, `.xls` and `.ods` Excel files
+- [x] Send out emails with PDF attachments
+- [x] Cross-platform: macOS, Windows, Linux
+- [x] Work offline
 
 ## Demo
 
