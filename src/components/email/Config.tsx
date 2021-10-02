@@ -194,7 +194,10 @@ const Config = () => {
       </section>
 
       <section className="space-y-2 opacity-30">
-        <h3 className="font-bold leading-8">Gmail SMTP example:</h3>
+        <h3 className="font-bold leading-8">
+          Gmail SMTP example:{' '}
+          <small className="font-normal">(Some limitations may apply)</small>
+        </h3>
         <div className="flex">
           <p className="w-32">Host:</p>
           <p className="font-medium">smtp.gmail.com</p>
