@@ -10,9 +10,12 @@ const TextOptions: ITextboxOptions = {
   fontFamily: 'Helvetica',
   fill: '#000000',
   width: 100,
+  lockScalingY: true,
   lockSkewingX: true,
-  lockRotation: true,
   lockSkewingY: true,
+  lockRotation: true,
+  lockScalingFlip: true,
+  lockUniScaling: true,
   editable: false,
   originX: 'left',
   originY: 'top',
@@ -96,14 +99,6 @@ const useFabricJSEditor = () => {
       });
       canva.on('selection:updated', (e: any) => {
         setSelectedObject(e.selected[0]);
-      });
-      canva.on('object:scaling', (e: any) => {
-        const obj = e.target;
-        const h = obj.height * obj.scaleY;
-        obj.set({
-          height: h,
-          scaleY: 1,
-        });
       });
     };
 
