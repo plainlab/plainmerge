@@ -21,14 +21,16 @@ import {
 import fs from 'fs';
 import { promisify } from 'util';
 import XLSX from 'xlsx';
+import QRCode from 'qrcode';
 
 const readFile = promisify(fs.readFile);
 
-interface MyTextbox extends Textbox {
+interface Fieldbox extends Textbox {
   index: number;
+  renderType: string;
 }
 export interface CanvasObjects {
-  objects: [MyTextbox | Rect];
+  objects: [Fieldbox | Rect];
   clientWidth: number;
 }
 
@@ -205,8 +207,8 @@ const renderPage = async (
 
   for (let i = 0; i < canvasData.objects.length; i += 1) {
     const obj = canvasData.objects[i];
-    if (obj.type === 'text') {
-      const o = obj as MyTextbox;
+    if (obj.type?.includes('text')) {
+      const o = obj as Fieldbox;
 
       const rgbCode = hexToRgb(o.fill as string);
       const color = rgb(rgbCode.r / 255, rgbCode.g / 255, rgbCode.b / 255);
@@ -225,6 +227,9 @@ const renderPage = async (
       const y =
         height - (o.top || 0) * ratio - (o.height || 0) * ratio + offset;
 
+      const owidth = (o.width || 100) * ratio;
+      const oheight = (o.height || 100) * ratio;
+
       let alignment = TextAlignment.Left;
       if (o.textAlign === 'right') {
         alignment = TextAlignment.Right;
@@ -233,31 +238,40 @@ const renderPage = async (
       }
 
       const text = String(row[o.index]);
-      const multiText = layoutMultilineText(text || '', {
-        font,
-        fontSize: size,
-        bounds: {
-          x,
-          y,
-          width: (o.width || 100) * ratio,
-          height: (o.height || 100) * ratio,
-        },
-        alignment,
-      });
-
-      multiText.lines.forEach((p) => {
-        page.drawText(p.text, {
-          x: p.x,
-          y: p.y,
-          lineHeight: o.lineHeight,
-          size,
-          font,
-          maxWidth: (o.width || 100) * ratio,
-          color,
+      if (o.renderType === 'qrcode') {
+        const dataURL = await QRCode.toDataURL(text, {
+          width: owidth,
         });
-      });
-    } else if (obj.type === 'qrcode') {
-      // TODO: Handle qrcode here
+        const pngImage = await pdfDoc.embedPng(dataURL);
+        page.drawImage(pngImage, {
+          x,
+          y: y - owidth + oheight,
+        });
+      } else {
+        const multiText = layoutMultilineText(text || '', {
+          font,
+          fontSize: size,
+          bounds: {
+            x,
+            y,
+            width: owidth,
+            height: oheight,
+          },
+          alignment,
+        });
+
+        multiText.lines.forEach((p) => {
+          page.drawText(p.text, {
+            x: p.x,
+            y: p.y,
+            lineHeight: o.lineHeight,
+            size,
+            font,
+            maxWidth: owidth,
+            color,
+          });
+        });
+      }
     }
   }
 };
