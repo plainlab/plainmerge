@@ -481,8 +481,7 @@ const PdfEditor = () => {
               <select
                 onChange={(e) => setFontFamily(e.target.value)}
                 value={fontFamily}
-                disabled={!selectedObject}
-                hidden={renderType !== 'text'}
+                disabled={!selectedObject || renderType !== 'text'}
               >
                 {fonts.map(({ label, value }) => (
                   <option value={value} key={value}>
@@ -497,8 +496,7 @@ const PdfEditor = () => {
                   setFontSize(parseInt(e.target.value, 10) || 16)
                 }
                 value={fontSize}
-                disabled={!selectedObject}
-                hidden={renderType !== 'text'}
+                disabled={!selectedObject || renderType !== 'text'}
               >
                 {fontSizes.map((v) => (
                   <option value={v} key={v}>
@@ -509,9 +507,8 @@ const PdfEditor = () => {
 
               <section
                 className={`flex items-center justify-center border-t border-b rounded-sm ${
-                  renderType !== 'text' ? 'hidden' : ''
+                  renderType !== 'text' ? 'opacity-50' : ''
                 }`}
-                hidden={renderType !== 'text'}
               >
                 {['left', 'center', 'right'].map((al) => (
                   <button
@@ -530,14 +527,19 @@ const PdfEditor = () => {
               </section>
 
               <div
-                className="p-2 border-2 border-white rounded shadow outline-none w-7 h-7 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`p-2 border-2 border-white rounded shadow outline-none w-7 h-7 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  renderType !== 'text' ? 'opacity-50 cursor-default' : ''
+                }`}
                 style={{ backgroundColor: fill }}
-                onClick={() => selectedObject && setShowPicker(true)}
+                onClick={() =>
+                  selectedObject && renderType === 'text' && setShowPicker(true)
+                }
                 role="button"
                 aria-labelledby="pick"
-                onKeyPress={() => selectedObject && setShowPicker(true)}
+                onKeyPress={() =>
+                  selectedObject && renderType === 'text' && setShowPicker(true)
+                }
                 tabIndex={0}
-                hidden={renderType !== 'text'}
               />
               {showPicker ? (
                 <div className="relative">

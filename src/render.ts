@@ -207,7 +207,7 @@ const renderPage = async (
 
   for (let i = 0; i < canvasData.objects.length; i += 1) {
     const obj = canvasData.objects[i];
-    if (obj.type === 'text') {
+    if (obj.type?.includes('text')) {
       const o = obj as Fieldbox;
 
       const rgbCode = hexToRgb(o.fill as string);
@@ -239,12 +239,14 @@ const renderPage = async (
 
       const text = String(row[o.index]);
       if (o.renderType === 'qrcode') {
-        const qrSize = Math.max(owidth, oheight);
         const dataURL = await QRCode.toDataURL(text, {
-          width: qrSize,
+          width: owidth,
         });
         const pngImage = await pdfDoc.embedPng(dataURL);
-        page.drawImage(pngImage, { x, y: y - qrSize });
+        page.drawImage(pngImage, {
+          x,
+          y: y - owidth + oheight,
+        });
       } else {
         const multiText = layoutMultilineText(text || '', {
           font,

@@ -3,7 +3,7 @@ import { fabric } from 'fabric';
 import { ITextboxOptions, Textbox } from 'fabric/fabric-impl';
 
 const TextOptions: ITextboxOptions = {
-  type: 'text',
+  type: 'textbox',
   left: 100,
   top: 100,
   fontSize: 16,
@@ -22,7 +22,7 @@ const TextOptions: ITextboxOptions = {
   padding: 1,
 };
 
-const lockProperties = [
+const props = [
   'lockScalingY',
   'lockSkewingX',
   'lockSkewingY',
@@ -52,7 +52,7 @@ const buildEditor = (canvas: fabric.Canvas): FabricJSEditor => {
     dump: () => {
       return {
         objects: canvas.getObjects().map((o) => {
-          const out = o.toJSON(lockProperties);
+          const out = o.toJSON(props);
           out.index = o.data && parseInt(o.data.index, 10);
           out.renderType = o.data?.renderType || 'text';
           return out;
@@ -67,6 +67,11 @@ const buildEditor = (canvas: fabric.Canvas): FabricJSEditor => {
             index: data.objects[i].index,
             renderType: data.objects[i].renderType,
           };
+
+          // Handle legacy text type
+          if (o.type === 'text') {
+            o.type = 'textbox';
+          }
         }
       });
       canvas.renderAll();
@@ -81,7 +86,7 @@ const buildEditor = (canvas: fabric.Canvas): FabricJSEditor => {
     },
     updateText: (extraOptions?: Partial<Fieldbox>) => {
       const objects: any[] = canvas.getActiveObjects();
-      if (objects.length && objects[0].type === 'text') {
+      if (objects.length && objects[0].type.includes('text')) {
         const textObject: Fieldbox = objects[0];
         if (extraOptions) {
           extraOptions.data = {
