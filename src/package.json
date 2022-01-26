@@ -15,9 +15,7 @@
   },
   "license": "GPL-3.0-only",
   "dependencies": {
-    "fabric": "^4.5.1"
+    "fabric": "^4.6.0"
   },
-  "devDependencies": {
-    "@types/pdfjs-dist": "^2.7.4"
-  }
+  "devDependencies": {}
 }

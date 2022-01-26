@@ -297,7 +297,7 @@ const PdfEditor = () => {
       }
 
       setCombinePdf(currentState.combinePdf);
-      ipcRenderer.invoke('save-config', currentState);
+      ipcRenderer.invoke('save-config', getCurrentState());
     }
   }, [currentState]);
 

@@ -244,7 +244,7 @@ const renderPage = async (
           width: qrSize,
         });
         const pngImage = await pdfDoc.embedPng(dataURL);
-        page.drawImage(pngImage, { x, y: y + qrSize });
+        page.drawImage(pngImage, { x, y: y - qrSize });
       } else {
         const multiText = layoutMultilineText(text || '', {
           font,
