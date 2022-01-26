@@ -22,12 +22,26 @@ const TextOptions: ITextboxOptions = {
   padding: 1,
 };
 
+const lockProperties = [
+  'lockScalingY',
+  'lockSkewingX',
+  'lockSkewingY',
+  'lockRotation',
+  'lockScalingFlip',
+  'lockUniScaling',
+];
+
+export interface Fieldbox extends Textbox {
+  index: number;
+  renderType: string;
+}
+
 export interface FabricJSEditor {
   canvas: fabric.Canvas;
   dump: () => any;
   load: (data: any) => void;
   addText: (text: string, extraOptions?: ITextboxOptions) => void;
-  updateText: (extraOptions?: Partial<Textbox>) => void;
+  updateText: (extraOptions?: Partial<Fieldbox>) => void;
   deleteAll: () => void;
   deleteSelected: () => void;
 }
@@ -38,8 +52,9 @@ const buildEditor = (canvas: fabric.Canvas): FabricJSEditor => {
     dump: () => {
       return {
         objects: canvas.getObjects().map((o) => {
-          const out = o.toJSON();
+          const out = o.toJSON(lockProperties);
           out.index = o.data && parseInt(o.data.index, 10);
+          out.renderType = o.data?.renderType || 'text';
           return out;
         }),
       };
@@ -48,7 +63,10 @@ const buildEditor = (canvas: fabric.Canvas): FabricJSEditor => {
       canvas.loadFromJSON(data, () => {});
       canvas.getObjects().forEach((o, i) => {
         if (data.objects[i].index !== undefined) {
-          o.data = { index: data.objects[i].index };
+          o.data = {
+            index: data.objects[i].index,
+            renderType: data.objects[i].renderType,
+          };
         }
       });
       canvas.renderAll();
@@ -61,11 +79,15 @@ const buildEditor = (canvas: fabric.Canvas): FabricJSEditor => {
       object.set({ text });
       canvas.add(object);
     },
-    updateText: (extraOptions?: Partial<Textbox>) => {
+    updateText: (extraOptions?: Partial<Fieldbox>) => {
       const objects: any[] = canvas.getActiveObjects();
       if (objects.length && objects[0].type === 'text') {
-        const textObject: fabric.Textbox = objects[0];
+        const textObject: Fieldbox = objects[0];
         if (extraOptions) {
+          extraOptions.data = {
+            ...textObject.data,
+            renderType: extraOptions.renderType,
+          };
           textObject.set(extraOptions);
           canvas.renderAll();
         }

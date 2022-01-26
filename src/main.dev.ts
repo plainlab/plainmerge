@@ -42,7 +42,7 @@ const store = new Store();
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 
-const configSuffix = '.merge.json';
+const configSuffix = 'merge.json';
 
 const getRowsLimit = () => {
   if (process.env.PAID) {

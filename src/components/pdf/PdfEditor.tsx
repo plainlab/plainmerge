@@ -9,7 +9,7 @@ import { ipcRenderer } from 'electron';
 // @ts-ignore
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
 import { StandardFonts, StandardFontValues } from 'pdf-lib';
-import { Rect, Textbox } from 'fabric/fabric-impl';
+import { Rect } from 'fabric/fabric-impl';
 import { TwitterPicker } from 'react-color';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { SizeMe } from 'react-sizeme';
@@ -18,6 +18,7 @@ import { useLocation } from 'react-router-dom';
 import { IconName } from '@fortawesome/fontawesome-svg-core';
 import { FabricJSCanvas, useFabricJSEditor } from '../fabric/Canvas';
 import { readExcelMeta } from '../utils/excel';
+import { Fieldbox } from '../fabric/editor';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 export interface DataHeader {
@@ -27,11 +28,8 @@ export interface DataHeader {
 
 type Align = 'left' | 'center' | 'right';
 
-interface MyTextbox extends Textbox {
-  index: number;
-}
 export interface CanvasObjects {
-  objects: [MyTextbox | Rect];
+  objects: [Fieldbox | Rect];
   clientWidth: number;
 }
 export interface RenderPdfState {
@@ -66,6 +64,7 @@ const PdfEditor = () => {
   const [fill, setFill] = useState('#000');
   const [showPicker, setShowPicker] = useState(false);
   const [align, setAlign] = useState<Align>('left');
+  const [renderType, setRenderType] = useState('text');
 
   const [pdfFile, setPdfFile] = useState('');
   const [excelFile, setExcelFile] = useState('');
@@ -213,6 +212,10 @@ const PdfEditor = () => {
   }));
 
   const fontSizes = [8, 10, 12, 14, 16, 18, 24, 30, 36, 48, 60];
+  const renderTypes = [
+    { value: 'text', label: 'Text' },
+    { value: 'qrcode', label: 'QR code' },
+  ];
 
   const handleKeyDown = (key: string) => {
     if (selectedObject) {
@@ -258,17 +261,19 @@ const PdfEditor = () => {
       fontSize,
       fill,
       textAlign: align as string,
+      renderType,
     });
 
     setCurrentState(getCurrentState());
-  }, [fontFamily, fontSize, fill, align]);
+  }, [fontFamily, fontSize, fill, align, renderType]);
 
   useEffect(() => {
-    const text = selectedObject as Textbox;
+    const text = selectedObject as Fieldbox;
     setFontFamily(text?.fontFamily || 'Helvetica');
     setFontSize(text?.fontSize || 16);
     setFill((text?.fill as string) || '#000');
     setAlign((text?.textAlign as Align) || 'left');
+    setRenderType(text?.renderType || 'text');
   }, [selectedObject]);
 
   useEffect(() => {
@@ -461,9 +466,23 @@ const PdfEditor = () => {
               }`}
             >
               <select
+                className="w-24"
+                onChange={(e) => setRenderType(e.target.value)}
+                value={renderType}
+                disabled={!selectedObject}
+              >
+                {renderTypes.map((r) => (
+                  <option value={r.value} key={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+
+              <select
                 onChange={(e) => setFontFamily(e.target.value)}
                 value={fontFamily}
                 disabled={!selectedObject}
+                hidden={renderType !== 'text'}
               >
                 {fonts.map(({ label, value }) => (
                   <option value={value} key={value}>
@@ -479,6 +498,7 @@ const PdfEditor = () => {
                 }
                 value={fontSize}
                 disabled={!selectedObject}
+                hidden={renderType !== 'text'}
               >
                 {fontSizes.map((v) => (
                   <option value={v} key={v}>
@@ -487,7 +507,12 @@ const PdfEditor = () => {
                 ))}
               </select>
 
-              <section className="flex items-center justify-center border-t border-b rounded-sm">
+              <section
+                className={`flex items-center justify-center border-t border-b rounded-sm ${
+                  renderType !== 'text' ? 'hidden' : ''
+                }`}
+                hidden={renderType !== 'text'}
+              >
                 {['left', 'center', 'right'].map((al) => (
                   <button
                     type="button"
@@ -512,6 +537,7 @@ const PdfEditor = () => {
                 aria-labelledby="pick"
                 onKeyPress={() => selectedObject && setShowPicker(true)}
                 tabIndex={0}
+                hidden={renderType !== 'text'}
               />
               {showPicker ? (
                 <div className="relative">
