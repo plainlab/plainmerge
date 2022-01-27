@@ -100,7 +100,7 @@
     "email": "plain@manhtai.com",
     "url": "https://plainlab.github.io"
   },
-  "license": "GPL-3.0-only",
+  "license": "AGPL-3.0-only",
   "bugs": {
     "url": "https://github.com/plainlab/plainmerge/issues"
   },

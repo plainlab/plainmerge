@@ -124,7 +124,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
               }`}
             >
               <FontAwesomeIcon icon="folder" className="mr-2" />
-              Merge to Files
+              Merge into Files
             </button>
           </li>
           <li className="mr-2">
@@ -228,8 +228,8 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
         {!smtpValid && (
           <section className="w-full space-y-2">
             <p className="text-red-500">
-              Invalid SMTP configuration. Please configure and validate SMTP
-              server first in the Settings menu.
+              Invalid SMTP configuration. Please configure and validate your
+              SMTP server in the Settings menu.
             </p>
           </section>
         )}
