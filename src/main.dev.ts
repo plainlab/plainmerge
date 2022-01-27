@@ -181,7 +181,9 @@ const saveConfig = async (params: RenderPdfState) => {
 
 const loadConfig = async (fp: string) => {
   const data = await readFile(fp, { encoding: 'utf8' });
-  return JSON.parse(data);
+  const conf = JSON.parse(data);
+  conf.configPath = fp;
+  return conf;
 };
 
 const loadConfigs = async () => {
@@ -204,8 +206,8 @@ const loadConfigs = async () => {
   return configList.filter((c: any) => c && c.pdfFile);
 };
 
-const removeConfig = async (pdfFile: string) => {
-  return promisify(fs.unlink)(getPathHash(pdfFile));
+const removeConfig = async (confPath: string) => {
+  return promisify(fs.unlink)(confPath);
 };
 
 const savePdf = async (params: RenderPdfState) => {

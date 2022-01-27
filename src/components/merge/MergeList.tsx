@@ -56,7 +56,7 @@ const MergeList = () => {
           <section className="flex items-center justify-center">
             <FontAwesomeIcon
               icon={['far', 'trash-alt']}
-              onClick={() => handleRemove(state.pdfFile)}
+              onClick={() => handleRemove(state.configPath)}
               className="w-3 h-3 text-gray-400 cursor-pointer hover:opacity-80"
             />
           </section>

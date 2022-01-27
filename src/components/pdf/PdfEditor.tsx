@@ -33,6 +33,7 @@ export interface CanvasObjects {
   clientWidth: number;
 }
 export interface RenderPdfState {
+  configPath: string;
   pdfFile: string;
   excelFile: string;
   combinePdf: boolean;

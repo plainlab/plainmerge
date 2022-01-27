@@ -1,7 +1,7 @@
 {
   "name": "plainmerge",
   "productName": "PlainMerge",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Offline PDF mail merger",
   "main": "./main.prod.js",
   "author": {
@@ -13,7 +13,7 @@
     "electron-rebuild": "node -r ../.erb/scripts/BabelRegister.js ../.erb/scripts/ElectronRebuild.js",
     "postinstall": "yarn electron-rebuild"
   },
-  "license": "GPL-3.0-only",
+  "license": "AGPL-3.0-only",
   "dependencies": {
     "fabric": "^4.6.0"
   },
