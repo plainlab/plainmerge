@@ -115,11 +115,14 @@ const Config = () => {
   return (
     <section className="flex flex-col items-start justify-between flex-1 p-8 space-y-8 bg-gray-50">
       <section className="flex flex-col items-start justify-center space-y-8">
-        <h2 className="text-lg font-bold leading-8">SMTP configuration</h2>
+        <h2 className="space-x-1 leading-8">
+          <span className="text-lg font-bold">SMTP configuration</span>
+          <span className="text-md">(For sending out emails)</span>
+        </h2>
 
         <section className="flex flex-col items-start justify-center space-y-4">
           <div className="flex items-center justify-start">
-            <p className="w-32 font-bold">Host:</p>
+            <p className="w-32 font-medium">Host:</p>
             <input
               type="text"
               placeholder="smtp.gmail.com"
@@ -129,7 +132,7 @@ const Config = () => {
             />
           </div>
           <div className="flex items-center justify-start w-full">
-            <p className="w-32 font-bold">Port:</p>
+            <p className="w-32 font-medium">Port:</p>
             <input
               type="number"
               placeholder="587"
@@ -139,7 +142,7 @@ const Config = () => {
             />
           </div>
           <div className="flex items-center justify-start">
-            <p className="w-32 font-bold">Secure:</p>
+            <p className="w-32 font-medium">Secure:</p>
             <input
               type="checkbox"
               checked={config?.secure}
@@ -147,7 +150,7 @@ const Config = () => {
             />
           </div>
           <div className="flex items-center justify-start">
-            <p className="w-32 font-bold">User:</p>
+            <p className="w-32 font-medium">User:</p>
             <input
               type="text"
               placeholder="email"
@@ -157,7 +160,7 @@ const Config = () => {
             />
           </div>
           <div className="flex items-center justify-start">
-            <p className="w-32 font-bold">Password:</p>
+            <p className="w-32 font-medium">Password:</p>
             <input
               type="password"
               placeholder="password"
@@ -194,7 +197,7 @@ const Config = () => {
       </section>
 
       <section className="space-y-2 opacity-30">
-        <h3 className="font-bold leading-8">
+        <h3 className="font-medium leading-8">
           Gmail SMTP example:{' '}
           <small className="font-normal">(Some limitations may apply)</small>
         </h3>
@@ -216,7 +219,7 @@ const Config = () => {
         </div>
         <div className="flex">
           <p className="w-32">Password:</p>
-          <p className="font-medium">email-pass-or-2fa-pass</p>
+          <p className="font-medium">email-password-or-2fa-passcode</p>
         </div>
       </section>
     </section>

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import Tags from '@yaireo/tagify/dist/react.tagify';
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { DataHeader, RenderPdfState } from '../pdf/PdfEditor';
 import { readExcelMeta } from '../utils/excel';
 import { SmtpConfigKey, SmtpConfigType } from '../email/Config';
@@ -28,6 +29,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
   const [combinePdf, setCombinePdf] = useState(true);
   const [outputPdf, setOutputPdf] = useState('');
   const [smtpValid, setSmtpValid] = useState(false);
+  const [tab, setTab] = useState('local');
 
   const tagSettings = {
     pattern: /@/,
@@ -108,15 +110,48 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
   }, []);
 
   return (
-    <section className="absolute inset-0 flex flex-col items-start justify-between p-8 space-y-8 overflow-x-hidden overflow-y-auto bg-gray-50">
-      <section className="flex flex-col items-start justify-center w-full pb-8 space-y-8">
-        <h2 className="w-full text-lg font-bold leading-8 border-b">
-          Save to files
-        </h2>
+    <section className="absolute inset-0 flex flex-col items-start justify-start px-8 py-6 space-y-8 overflow-x-hidden overflow-y-auto bg-gray-50">
+      <div className="w-full border-b border-gray-200 dark:border-gray-700">
+        <ul className="flex flex-wrap -mb-px">
+          <li className="mr-2">
+            <button
+              type="button"
+              onClick={() => setTab('local')}
+              className={`inline-flex outline-none appearance-none items-center px-4 py-4 text-sm font-medium text-center border-b-2 border-transparent rounded-t-lg group ${
+                tab === 'email'
+                  ? 'text-gray-500 hover:text-gray-600 hover:border-gray-300'
+                  : 'text-blue-600 border-blue-600'
+              }`}
+            >
+              <FontAwesomeIcon icon="folder" className="mr-2" />
+              Merge to Files
+            </button>
+          </li>
+          <li className="mr-2">
+            <button
+              type="button"
+              onClick={() => setTab('email')}
+              className={`inline-flex outline-none appearance-none items-center px-4 py-4 text-sm font-medium text-center border-b-2 rounded-t-lg active group ${
+                tab === 'local'
+                  ? 'text-gray-500 hover:text-gray-600 hover:border-gray-300'
+                  : 'text-blue-600 border-blue-600'
+              }`}
+            >
+              <FontAwesomeIcon icon="envelope" className="mr-2" />
+              Send out Emails
+            </button>
+          </li>
+        </ul>
+      </div>
 
+      <section
+        className={`flex flex-col items-start justify-start w-full pb-8 space-y-8 ${
+          tab === 'local' ? '' : 'hidden'
+        }`}
+      >
         <section className="flex flex-col w-full space-y-6">
           <div className="flex items-center justify-between space-x-2">
-            <p className="font-bold">Save to:</p>
+            <p className="font-medium">Location:</p>
             <input type="text" value={outputPdf} disabled className="flex-1" />
             <button type="button" onClick={handleChooseFile} className="btn">
               Choose...
@@ -156,7 +191,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
           </section>
         </section>
 
-        <section className="flex flex-col items-start justify-center space-y-4">
+        <section className="flex flex-col items-start justify-center space-y-8">
           <section className="opacity-70">
             {saving ? (
               <p className="text-green-500">
@@ -180,29 +215,29 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
             onClick={handleSavePdf}
             disabled={!outputPdf || saving}
           >
-            Save
+            Merge
           </button>
         </section>
       </section>
 
-      <section className="flex flex-col items-start justify-center w-full pb-8 space-y-8">
-        <section className="w-full space-y-2">
-          <h2 className="w-full text-lg font-bold leading-8 border-b">
-            Send as email attachments
-          </h2>
-
-          {!smtpValid ? (
+      <section
+        className={`flex flex-col items-start justify-center w-full pb-8 space-y-8 ${
+          tab === 'email' ? '' : 'hidden'
+        }`}
+      >
+        {!smtpValid && (
+          <section className="w-full space-y-2">
             <p className="text-red-500">
               Invalid SMTP configuration. Please configure and validate SMTP
-              server first.
+              server first in the Settings menu.
             </p>
-          ) : null}
-        </section>
+          </section>
+        )}
 
         <section className="flex flex-col w-full space-y-6">
           <div className="flex flex-col space-y-2">
             <section className="flex items-center justify-between space-y-2">
-              <p className="font-bold">From:</p>
+              <p className="font-medium">From:</p>
             </section>
             <input
               type="text"
@@ -215,7 +250,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
 
           <div className="flex flex-col space-y-2">
             <section className="flex items-center justify-between space-y-2">
-              <p className="font-bold">To:</p>
+              <p className="font-medium">To:</p>
               <small className="text-xs text-right opacity-70">
                 Choose a column that contains email address for sending
               </small>
@@ -235,9 +270,9 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
 
           <div className="flex flex-col space-y-2">
             <section className="flex items-center justify-between space-y-2">
-              <p className="font-bold">Subject:</p>
+              <p className="font-medium">Subject:</p>
               <small className="text-xs text-right opacity-70">
-                Type @ to insert column value into subject
+                Type @ to insert column values into the subject
               </small>
             </section>
             <Tags
@@ -255,9 +290,9 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
 
           <div className="flex flex-col space-y-2">
             <section className="flex items-center justify-between space-y-2">
-              <p className="font-bold">Body:</p>
+              <p className="font-medium">Body:</p>
               <small className="text-xs text-right opacity-70">
-                Type @ to insert column value into body
+                Type @ to insert column values into the body
               </small>
             </section>
             <Tags
@@ -275,7 +310,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
           </div>
         </section>
 
-        <section className="flex flex-col items-start justify-center mb-10 space-y-4">
+        <section className="flex flex-col items-start justify-center mb-10 space-y-8">
           <section className="opacity-70">
             {sending ? (
               <p className="text-green-500">

@@ -3,6 +3,8 @@ import { fab } from '@fortawesome/free-brands-svg-icons';
 import { faFilePdf, faTrashAlt } from '@fortawesome/free-regular-svg-icons';
 import {
   faAlignCenter,
+  faEnvelope,
+  faFolder,
   faAlignLeft,
   faAlignRight,
   faCog,
@@ -19,6 +21,8 @@ library.add(
   faFilePdf,
   faHistory,
   faPlus,
+  faFolder,
+  faEnvelope,
   faEllipsisV,
   faTrashAlt,
   faAlignRight,
