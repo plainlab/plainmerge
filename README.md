@@ -7,7 +7,7 @@
 
 ## What is this?
 
-Imagine you want to fill a PDF form for 100 employees with a specific name and address
+Imagine you want to fill out a PDF form for 100 employees with a specific name and address
 for each of them. You got the PDF form and all your staff information in an Excel file.
 
 That's when PlainMerge helps.
@@ -37,7 +37,8 @@ You got 100 different PDFs for each employee now.
 
 Download page: https://github.com/plainlab/plainmerge/releases
 
-- macOS: Get `.dmg` file, open it and drag the app into Applications folder, for M1 mac: get `arm64.dmg` file instead.
+- macOS: Get `.dmg` file, open it and drag the app into Applications folder, for Apple
+  Silicon mac: get `arm64.dmg` file instead.
 - Windows: Get `.exe` file and open it to install.
 - Linux: Get `.AppImage` file to install, for ARM laptop: get `arm64.AppImage` file instead.
 

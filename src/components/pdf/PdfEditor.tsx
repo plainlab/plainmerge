@@ -425,7 +425,7 @@ const PdfEditor = () => {
                       id="toggle"
                       checked={formLayout}
                       onChange={() => setFormLayout(!formLayout)}
-                      className="absolute block w-5 h-5 bg-white border-2 rounded-full appearance-none cursor-pointer checked:right-0"
+                      className="absolute block w-5 h-5 bg-white border-2 rounded-full outline-none appearance-none cursor-pointer checked:right-0"
                     />
                   </label>
                 </div>

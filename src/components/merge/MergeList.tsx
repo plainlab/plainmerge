@@ -30,7 +30,7 @@ const MergeList = () => {
     <ul className="flex flex-col items-center justify-start flex-1 p-8 space-y-8 truncate bg-gray-50">
       {merges.map((state) => (
         <li
-          className="flex items-center justify-start w-full p-4 space-x-4 bg-white border shadow-sm rounded-xl"
+          className="flex items-center justify-start w-full p-4 space-x-4 transition-shadow bg-gray-100 border shadow-sm hover:shadow-md rounded-xl"
           key={state.pdfFile}
         >
           <section className="flex items-center justify-center flex-1 space-x-2 truncate">
