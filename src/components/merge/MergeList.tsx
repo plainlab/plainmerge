@@ -15,7 +15,7 @@ const MergeList = () => {
       .catch(console.error);
   };
 
-  const handleRemove = (filename: string) => {
+  const handleRemove = (filename?: string) => {
     ipcRenderer
       .invoke('remove-history', { filename })
       .then(loadHistory)

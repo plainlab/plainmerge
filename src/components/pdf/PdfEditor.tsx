@@ -33,13 +33,13 @@ export interface CanvasObjects {
   clientWidth: number;
 }
 export interface RenderPdfState {
-  configPath: string;
   pdfFile: string;
   excelFile: string;
   combinePdf: boolean;
   pageNumber: number;
   canvasData?: Record<number, CanvasObjects>;
   formData?: Record<string, number>;
+  configPath?: string;
 }
 interface FieldType {
   type: string;
