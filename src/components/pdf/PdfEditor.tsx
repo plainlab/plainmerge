@@ -216,6 +216,7 @@ const PdfEditor = () => {
   const renderTypes = [
     { value: 'text', label: 'Text' },
     { value: 'qrcode', label: 'QR code' },
+    { value: 'barcode', label: 'Barcode' },
   ];
 
   const handleKeyDown = (key: string) => {

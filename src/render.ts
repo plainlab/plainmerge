@@ -22,8 +22,10 @@ import fs from 'fs';
 import { promisify } from 'util';
 import XLSX from 'xlsx';
 import QRCode from 'qrcode';
+import JsBarcode from 'jsbarcode';
 
 const readFile = promisify(fs.readFile);
+const { createCanvas } = require('canvas');
 
 interface Fieldbox extends Textbox {
   index: number;
@@ -242,6 +244,18 @@ const renderPage = async (
         const dataURL = await QRCode.toDataURL(text, {
           width: owidth,
         });
+        const pngImage = await pdfDoc.embedPng(dataURL);
+        page.drawImage(pngImage, {
+          x,
+          y: y - owidth + oheight,
+        });
+      } else if (o.renderType === 'barcode') {
+        const canvas = createCanvas(owidth, oheight);
+        JsBarcode(canvas, text, {
+          width: owidth,
+          height: oheight,
+        });
+        const dataURL = canvas.toDataURL('image/png');
         const pngImage = await pdfDoc.embedPng(dataURL);
         page.drawImage(pngImage, {
           x,

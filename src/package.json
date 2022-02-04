@@ -15,6 +15,7 @@
   },
   "license": "AGPL-3.0-only",
   "dependencies": {
+    "canvas": "^2.9.0",
     "fabric": "^4.6.0"
   },
   "devDependencies": {}
