@@ -30,6 +30,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
   const [outputPdf, setOutputPdf] = useState('');
   const [smtpValid, setSmtpValid] = useState(false);
   const [tab, setTab] = useState('local');
+  const [filename, setFilename] = useState(0);
 
   const tagSettings = {
     pattern: /@/,
@@ -189,6 +190,23 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
               </label>
             ) : null}
           </section>
+
+          {!combinePdf && (
+            <section className="flex items-center space-x-4">
+              <p>Filename column:</p>
+
+              <select
+                onChange={(e) => setFilename(parseInt(e.target.value, 10))}
+                value={filename}
+              >
+                {headers.map((h) => (
+                  <option key={h.index} value={h.index}>
+                    {h.label}
+                  </option>
+                ))}
+              </select>
+            </section>
+          )}
         </section>
 
         <section className="flex flex-col items-start justify-center space-y-8">
@@ -307,6 +325,28 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
                 value: label,
               }))}
             />
+          </div>
+
+          <div className="flex flex-col space-y-2">
+            <section className="flex items-center justify-between space-y-2">
+              <p className="font-medium">Filename:</p>
+              <small className="text-xs text-right opacity-70">
+                Choose a column that will be used as filename for the PDF
+              </small>
+            </section>
+            <section className="flex items-center space-x-4">
+              <select
+                className="w-full"
+                onChange={(e) => setFilename(parseInt(e.target.value, 10))}
+                value={filename}
+              >
+                {headers.map((h) => (
+                  <option key={h.index} value={h.index}>
+                    {h.label}
+                  </option>
+                ))}
+              </select>
+            </section>
           </div>
         </section>
 
