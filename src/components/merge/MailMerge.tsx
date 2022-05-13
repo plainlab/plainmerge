@@ -31,7 +31,6 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
   const [smtpValid, setSmtpValid] = useState(false);
   const [tab, setTab] = useState('local');
   const [filename, setFilename] = useState('');
-  const [rowsLimit, setRowsLimit] = useState(10);
 
   const tagSettings = {
     pattern: /@/,
@@ -42,7 +41,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
     },
   };
 
-  const loadConfig = async (fp: string) => {
+  const loadConfig = async (fp: string, rowsLimit: number) => {
     const pdfConf: RenderPdfState = await ipcRenderer.invoke('load-config', fp);
     const { firstRow, rowCount } = await readExcelMeta(
       pdfConf.excelFile,
@@ -105,7 +104,13 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
   };
 
   useEffect(() => {
-    loadConfig(configPath).catch((e) => alert(e.message));
+    ipcRenderer
+      .invoke('get-rows-limit')
+      .then((limit) =>
+        // eslint-disable-next-line promise/no-nesting
+        loadConfig(configPath, limit).catch((e) => alert(e.message))
+      )
+      .catch(() => {});
 
     ipcRenderer.on('email-progress', (_event, p) => {
       setEmailProgress(p.page);
@@ -117,11 +122,6 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
       setFileProgress(p.page);
       setRowsCount(p.total);
     });
-
-    ipcRenderer
-      .invoke('get-rows-limit')
-      .then((l) => setRowsLimit(l))
-      .catch(() => {});
   }, []);
 
   return (

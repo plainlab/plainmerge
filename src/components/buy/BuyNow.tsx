@@ -4,8 +4,10 @@ import { Helmet } from 'react-helmet';
 
 const BuyNow = () => {
   const [license, setLicense] = useState('');
+  const [registering, setRegistering] = useState(false);
 
   const handleRegister = async () => {
+    setRegistering(true);
     try {
       const success = await ipcRenderer.invoke('add-license', license);
       if (success) {
@@ -16,6 +18,7 @@ const BuyNow = () => {
     } catch (e) {
       alert(e.message);
     }
+    setRegistering(false);
   };
 
   return (
@@ -37,7 +40,7 @@ const BuyNow = () => {
             type="button"
             className="btn"
             onClick={handleRegister}
-            disabled={!license}
+            disabled={!license || registering}
           >
             Register
           </button>
