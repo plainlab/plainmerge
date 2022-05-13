@@ -29,10 +29,12 @@ import crypto from 'crypto';
 import glob from 'glob';
 import nodeurl from 'url';
 import { promisify } from 'util';
+import { CheckStatus } from 'electron-gumroad-license';
 
 import MenuBuilder from './menu';
 import renderPdf, { loadForm, RenderPdfState, RowMap } from './render';
 import { SmtpConfigType } from './email';
+import { getRowsLimit } from './components/utils/license';
 
 const Store = require('electron-store');
 const nodemailer = require('nodemailer');
@@ -44,13 +46,6 @@ const readFile = promisify(fs.readFile);
 
 const configSuffix = 'merge.json';
 
-const getRowsLimit = () => {
-  if (process.env.PAID) {
-    return 100_000;
-  }
-  return 10;
-};
-
 export default class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
@@ -61,6 +56,7 @@ export default class AppUpdater {
 
 let mainWindow: BrowserWindow | null = null;
 let mailMergeWindow: BrowserWindow | null = null;
+let buyNowWindow: BrowserWindow | null = null;
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -219,11 +215,12 @@ const savePdf = async (params: RenderPdfState) => {
   }
 
   try {
+    const rowsLimit = await getRowsLimit();
     const created = await renderPdf({
       output: params.outputPdf,
       pdfFile: params.pdfFile,
       excelFile: params.excelFile,
-      rowsLimit: getRowsLimit(),
+      rowsLimit,
       combinePdf: params.combinePdf,
       saveFileFunc: writeFile,
       updateProgressFunc: (page, total) =>
@@ -314,6 +311,36 @@ const previewPdf = async (params: RenderPdfState) => {
       }).show();
     }
   }
+};
+
+const createBuyNowWindow = () => {
+  if (buyNowWindow == null) {
+    buyNowWindow = new BrowserWindow({
+      parent: mainWindow || undefined,
+      width: windowHeight,
+      height: windowHeight,
+      minWidth: windowHeight,
+      minHeight: windowHeight,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+      },
+    });
+  }
+  buyNowWindow.loadURL(`file://${__dirname}/index.html?page=buy`);
+
+  buyNowWindow.webContents.on('did-finish-load', () => {
+    buyNowWindow?.show();
+  });
+
+  buyNowWindow.on('closed', () => {
+    buyNowWindow = null;
+  });
+
+  buyNowWindow.webContents.on('new-window', (event, url) => {
+    event.preventDefault();
+    shell.openExternal(url);
+  });
 };
 
 const createMailMergeWindow = (configPath: string) => {
@@ -421,11 +448,12 @@ const sendPdfMail = async (
       path.basename(params.pdfFile)
     );
 
+    const rowsLimit = await getRowsLimit();
     const created = await renderPdf({
       output,
       pdfFile: params.pdfFile,
       excelFile: params.excelFile,
-      rowsLimit: getRowsLimit(),
+      rowsLimit,
       combinePdf: false,
       saveFileFunc: sendMailFunc(
         fromEmail,
@@ -621,6 +649,20 @@ ipcMain.handle(
     );
   }
 );
+
+ipcMain.handle('check-license', async () => {
+  const { status } = await licenseManager.checkCurrentLicense();
+  return status === CheckStatus.ValidLicense;
+});
+
+ipcMain.handle('add-license', async (_event, license: string) => {
+  const { success } = await licenseManager.addLicense(license);
+  return success;
+});
+
+ipcMain.handle('buy-now', async () => {
+  createBuyNowWindow();
+});
 
 /**
  * Add event listeners...

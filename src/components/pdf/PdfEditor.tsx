@@ -84,6 +84,7 @@ const PdfEditor = () => {
 
   const [headers, setHeaders] = useState<DataHeader[]>([]);
   const [combinePdf, setCombinePdf] = useState(true);
+  const [paid, setPaid] = useState(true);
 
   const loadExcelFile = async (fp: string) => {
     const { firstRow } = await readExcelMeta(fp);
@@ -146,6 +147,10 @@ const PdfEditor = () => {
 
   const handleMailMerge = async () => {
     await ipcRenderer.invoke('mail-merge', getCurrentState());
+  };
+
+  const handleBuy = async () => {
+    await ipcRenderer.invoke('buy-now');
   };
 
   const handlePreview = async () => {
@@ -361,6 +366,13 @@ const PdfEditor = () => {
     ipcRenderer.on('keydown', (_event, key) => {
       handleKeyDown(key);
     });
+
+    ipcRenderer
+      .invoke('check-license')
+      .then((p) => setPaid(p))
+      .catch(() =>
+        alert('Can not validate your license. Please try again later.')
+      );
   }, []);
 
   return (
@@ -437,9 +449,17 @@ const PdfEditor = () => {
           </section>
 
           <section className="flex items-center justify-between space-x-2">
-            {!process.env.PAID ? (
-              <p className="text-red-500">Trial limit: 10 records</p>
-            ) : null}
+            {!paid && <p className="text-red-500">Trial limit: 10 records</p>}
+
+            {!paid && (
+              <button
+                type="button"
+                className="text-red-500 btn"
+                onClick={handleBuy}
+              >
+                Register
+              </button>
+            )}
 
             <button
               type="button"
