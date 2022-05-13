@@ -123,7 +123,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
             <button
               type="button"
               onClick={() => setTab('local')}
-              className={`inline-flex outline-none appearance-none items-center px-4 py-4 text-sm font-medium text-center border-b-2 border-transparent rounded-t-lg group ${
+              className={`inline-flex outline-none appearance-none items-center px-4 pt-4 pb-2 text-sm font-medium text-center border-b-2 border-transparent rounded-t-lg group ${
                 tab === 'email'
                   ? 'text-gray-500 hover:text-gray-600 hover:border-gray-300'
                   : 'text-blue-600 border-blue-600'
@@ -137,7 +137,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
             <button
               type="button"
               onClick={() => setTab('email')}
-              className={`inline-flex outline-none appearance-none items-center px-4 py-4 text-sm font-medium text-center border-b-2 rounded-t-lg active group ${
+              className={`inline-flex outline-none appearance-none items-center px-4 pt-4 pb-2 text-sm font-medium text-center border-b-2 rounded-t-lg active group ${
                 tab === 'local'
                   ? 'text-gray-500 hover:text-gray-600 hover:border-gray-300'
                   : 'text-blue-600 border-blue-600'

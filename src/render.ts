@@ -23,6 +23,7 @@ import { promisify } from 'util';
 import XLSX from 'xlsx';
 import QRCode from 'qrcode';
 import unidecode from 'unidecode-plus';
+import path from 'path';
 
 const readFile = promisify(fs.readFile);
 
@@ -94,11 +95,11 @@ const sheetToArray = (sheet: XLSX.WorkSheet) => {
   return result;
 };
 
-const readFirstSheet = (path: string, rowsLimit: number) => {
+const readFirstSheet = (filepath: string, rowsLimit: number) => {
   const headerOffset = 1;
   const sheetRows = rowsLimit + headerOffset;
 
-  const workbook = XLSX.readFile(path, { sheetRows });
+  const workbook = XLSX.readFile(filepath, { sheetRows });
   const sheetsList = workbook.SheetNames;
   const firstSheet = workbook.Sheets[sheetsList[0]];
   const rows = sheetToArray(firstSheet)
@@ -351,10 +352,8 @@ const renderPdf = async (params: RenderPDFParams) => {
 
     if (!params.combinePdf) {
       const pdfBytes = await newDoc.save();
-      const outputs = params.output.split('.');
-
-      const baseName = outputs.slice(0, outputs.length - 1).join('.');
-      const fileEx = outputs[outputs.length - 1];
+      const fileDir = path.dirname(params.output);
+      const fileEx = path.extname(params.output);
 
       // Render filename
       let filename = '';
@@ -369,12 +368,19 @@ const renderPdf = async (params: RenderPDFParams) => {
       }
 
       if (filename === '') {
-        filename = `${i + 1}`;
+        const basename = path.basename(params.output);
+        const parts = basename.split('.');
+        const fileBase = parts.slice(0, parts.length - 1).join('.');
+        filename = `${fileBase}_${i + 1}`;
       }
 
       filename = unidecode(filename).replace(/[^a-z0-9]/gi, '_');
-      const outputName = `${baseName}_${filename}.${fileEx}`;
-      await params.saveFileFunc(outputName, pdfBytes, rows[i]);
+      const outputName = `${filename}${fileEx}`;
+      await params.saveFileFunc(
+        path.join(fileDir, outputName),
+        pdfBytes,
+        rowData
+      );
 
       // Reset
       newDoc = await PDFDocument.create();
