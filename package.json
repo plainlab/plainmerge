@@ -115,7 +115,7 @@
     "hot",
     "reload"
   ],
-  "homepage": "https://github.com/plainmerge/plainmerge#readme",
+  "homepage": "https://github.com/plainlab/plainmerge#readme",
   "jest": {
     "testURL": "http://localhost/",
     "moduleNameMapper": {
