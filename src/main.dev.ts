@@ -218,28 +218,20 @@ const savePdf = async (params: RenderPdfState) => {
     return;
   }
 
-  const {
-    pdfFile,
-    excelFile,
-    combinePdf,
-    canvasData,
-    formData,
-    outputPdf,
-  } = params;
-
   try {
-    const created = await renderPdf(
-      outputPdf,
-      pdfFile,
-      excelFile,
-      getRowsLimit(),
-      combinePdf,
-      writeFile,
-      (page, total) =>
+    const created = await renderPdf({
+      output: params.outputPdf,
+      pdfFile: params.pdfFile,
+      excelFile: params.excelFile,
+      rowsLimit: getRowsLimit(),
+      combinePdf: params.combinePdf,
+      saveFileFunc: writeFile,
+      updateProgressFunc: (page, total) =>
         mailMergeWindow?.webContents.send('save-progress', { page, total }),
-      canvasData,
-      formData
-    );
+      canvasData: params.canvasData,
+      formData: params.formData,
+      filenameTemplate: params.filename,
+    });
 
     if (created > 0) {
       if (Notification.isSupported()) {
@@ -294,24 +286,22 @@ const previewPdf = async (params: RenderPdfState) => {
     return;
   }
 
-  const { pdfFile, excelFile, canvasData, formData } = params;
-
   try {
     const output = path.join(
       app.getPath('temp'),
-      `preview-${path.basename(pdfFile)}`
+      `preview-${path.basename(params.pdfFile)}`
     );
-    await renderPdf(
+    await renderPdf({
       output,
-      pdfFile,
-      excelFile,
-      1,
-      true,
-      writeFile,
-      () => {},
-      canvasData,
-      formData || {}
-    );
+      pdfFile: params.pdfFile,
+      excelFile: params.excelFile,
+      rowsLimit: 1,
+      combinePdf: true,
+      saveFileFunc: writeFile,
+      updateProgressFunc: () => {},
+      canvasData: params.canvasData,
+      formData: params.formData || {},
+    });
     openPdf(output);
   } catch (e) {
     dialog.showErrorBox('Preview failed', e.message);
@@ -369,7 +359,7 @@ const sendMailFunc = (
   emailIndex: number,
   subjectTemplate: string,
   bodyTemplate: string
-) => async (fileName: string, buffer: Uint8Array, rowData?: RowMap) => {
+) => async (filename: string, buffer: Uint8Array, rowData?: RowMap) => {
   const config = store.get('smtp-config');
 
   const transporter = nodemailer.createTransport({
@@ -397,7 +387,7 @@ const sendMailFunc = (
     html: text,
     attachments: [
       {
-        filename: path.basename(fileName),
+        filename: path.basename(filename),
         content: buffer,
       },
     ],
@@ -425,21 +415,29 @@ const sendPdfMail = async (
   bodyTemplate: string,
   params: RenderPdfState
 ) => {
-  const { pdfFile, excelFile, canvasData, formData } = params;
   try {
-    const output = path.join(app.getPath('temp'), path.basename(pdfFile));
-
-    const created = await renderPdf(
-      output,
-      pdfFile,
-      excelFile,
-      getRowsLimit(),
-      false,
-      sendMailFunc(fromEmail, emailIndex, subjectTemplate, bodyTemplate),
-      emailProgressFunc(emailIndex),
-      canvasData,
-      formData
+    const output = path.join(
+      app.getPath('temp'),
+      path.basename(params.pdfFile)
     );
+
+    const created = await renderPdf({
+      output,
+      pdfFile: params.pdfFile,
+      excelFile: params.excelFile,
+      rowsLimit: getRowsLimit(),
+      combinePdf: false,
+      saveFileFunc: sendMailFunc(
+        fromEmail,
+        emailIndex,
+        subjectTemplate,
+        bodyTemplate
+      ),
+      updateProgressFunc: emailProgressFunc(emailIndex),
+      canvasData: params.canvasData,
+      formData: params.formData,
+      filenameTemplate: params.filename,
+    });
 
     if (created > 0) {
       if (Notification.isSupported()) {

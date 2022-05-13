@@ -30,6 +30,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
   const [outputPdf, setOutputPdf] = useState('');
   const [smtpValid, setSmtpValid] = useState(false);
   const [tab, setTab] = useState('local');
+  const [filename, setFilename] = useState('');
 
   const tagSettings = {
     pattern: /@/,
@@ -65,6 +66,10 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
     setBody(e.detail.value);
   };
 
+  const handleChangeFilename = (e: any) => {
+    setFilename(e.detail.value);
+  };
+
   const handleChooseFile = () => {
     const name = 'PDF file';
     const extensions = ['pdf'];
@@ -76,20 +81,21 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
 
   const handleSendEmail = async () => {
     setSending(true);
+    const conf = { ...pdfConfig, filename };
     await ipcRenderer.invoke(
       'send-email',
       fromEmail,
       emailIndex,
       subject,
       body,
-      pdfConfig
+      conf
     );
     setSending(false);
   };
 
   const handleSavePdf = async () => {
     setSaving(true);
-    const conf = { ...pdfConfig, combinePdf, outputPdf };
+    const conf = { ...pdfConfig, combinePdf, outputPdf, filename };
     await ipcRenderer.invoke('save-pdf', conf);
     setSaving(false);
   };
@@ -117,7 +123,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
             <button
               type="button"
               onClick={() => setTab('local')}
-              className={`inline-flex outline-none appearance-none items-center px-4 py-4 text-sm font-medium text-center border-b-2 border-transparent rounded-t-lg group ${
+              className={`inline-flex outline-none appearance-none items-center px-4 pt-4 pb-2 text-sm font-medium text-center border-b-2 border-transparent rounded-t-lg group ${
                 tab === 'email'
                   ? 'text-gray-500 hover:text-gray-600 hover:border-gray-300'
                   : 'text-blue-600 border-blue-600'
@@ -131,7 +137,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
             <button
               type="button"
               onClick={() => setTab('email')}
-              className={`inline-flex outline-none appearance-none items-center px-4 py-4 text-sm font-medium text-center border-b-2 rounded-t-lg active group ${
+              className={`inline-flex outline-none appearance-none items-center px-4 pt-4 pb-2 text-sm font-medium text-center border-b-2 rounded-t-lg active group ${
                 tab === 'local'
                   ? 'text-gray-500 hover:text-gray-600 hover:border-gray-300'
                   : 'text-blue-600 border-blue-600'
@@ -189,6 +195,29 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
               </label>
             ) : null}
           </section>
+
+          {!combinePdf && (
+            <div className="flex flex-col space-y-2">
+              <section className="flex items-center justify-between space-y-2">
+                <p className="font-medium">Filename:</p>
+                <small className="text-xs text-right opacity-70">
+                  Type @ to insert column values into the filename
+                </small>
+              </section>
+              <Tags
+                placeholder="Filename"
+                InputMode="textarea"
+                onChange={handleChangeFilename}
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                settings={tagSettings}
+                whitelist={headers.map(({ index, label }) => ({
+                  id: index,
+                  value: label,
+                }))}
+              />
+            </div>
+          )}
         </section>
 
         <section className="flex flex-col items-start justify-center space-y-8">
@@ -299,6 +328,27 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
               placeholder="Email content"
               InputMode="textarea"
               onChange={handleChangeBody}
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              settings={tagSettings}
+              whitelist={headers.map(({ index, label }) => ({
+                id: index,
+                value: label,
+              }))}
+            />
+          </div>
+
+          <div className="flex flex-col space-y-2">
+            <section className="flex items-center justify-between space-y-2">
+              <p className="font-medium">Filename:</p>
+              <small className="text-xs text-right opacity-70">
+                Type @ to insert column values into the filename
+              </small>
+            </section>
+            <Tags
+              placeholder="Filename"
+              InputMode="textarea"
+              onChange={handleChangeFilename}
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
               settings={tagSettings}

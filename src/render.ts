@@ -22,6 +22,8 @@ import fs from 'fs';
 import { promisify } from 'util';
 import XLSX from 'xlsx';
 import QRCode from 'qrcode';
+import unidecode from 'unidecode-plus';
+import path from 'path';
 
 const readFile = promisify(fs.readFile);
 
@@ -41,6 +43,7 @@ export interface RenderPdfState {
   outputPdf: string;
   canvasData?: CanvasMap;
   formData?: FormMap;
+  filename?: string;
 }
 
 export type RowMap = Record<number, string>;
@@ -92,11 +95,11 @@ const sheetToArray = (sheet: XLSX.WorkSheet) => {
   return result;
 };
 
-const readFirstSheet = (path: string, rowsLimit: number) => {
+const readFirstSheet = (filepath: string, rowsLimit: number) => {
   const headerOffset = 1;
   const sheetRows = rowsLimit + headerOffset;
 
-  const workbook = XLSX.readFile(path, { sheetRows });
+  const workbook = XLSX.readFile(filepath, { sheetRows });
   const sheetsList = workbook.SheetNames;
   const firstSheet = workbook.Sheets[sheetsList[0]];
   const rows = sheetToArray(firstSheet)
@@ -289,39 +292,45 @@ export const loadForm = async (filename: string) => {
     .filter((v) => v.type);
 };
 
-const renderPdf = async (
-  output: string,
-  pdfFile: string,
-  excelFile: string,
-  rowsLimit: number,
-  combinePdf: boolean,
-  saveFile: (
+interface RenderPDFParams {
+  output: string;
+  pdfFile: string;
+  excelFile: string;
+  rowsLimit: number;
+  combinePdf: boolean;
+  saveFileFunc: (
     filename: string,
     content: Uint8Array,
     rowData?: RowMap
-  ) => Promise<void>,
-  updateProgress: (page: number, total: number, rowData?: RowMap) => void,
-  canvasData?: CanvasMap,
-  formData?: FormMap
-) => {
-  const pdfBuff = await readFile(pdfFile);
+  ) => Promise<void>;
+  updateProgressFunc: (page: number, total: number, rowData?: RowMap) => void;
+  canvasData?: CanvasMap;
+  formData?: FormMap;
+  filenameTemplate?: string;
+}
+
+const renderPdf = async (params: RenderPDFParams) => {
+  const pdfBuff = await readFile(params.pdfFile);
   let pdfDoc = await PDFDocument.load(pdfBuff);
   let newDoc = await PDFDocument.create();
   let cachedFonts: FontMap = {};
 
-  const rows: RowMap[] = readFirstSheet(excelFile, rowsLimit);
+  const rows: RowMap[] = readFirstSheet(params.excelFile, params.rowsLimit);
   for (let i = 0; i < rows.length; i += 1) {
+    const rowData = rows[i];
+
     // Step 1: Render pages with form
-    renderForm(rows[i], formData, pdfDoc.getForm());
+    renderForm(rows[i], params.formData, pdfDoc.getForm());
 
     // Step 2: Render pages with canvas for now
-    if (canvasData) {
+    if (params.canvasData) {
+      const { canvasData } = params;
       await Promise.all(
         pdfDoc.getPageIndices().map(async (pageIndex) => {
           if (canvasData[pageIndex + 1]) {
             const page = pdfDoc.getPage(pageIndex);
             await renderPage(
-              rows[i],
+              rowData,
               page,
               pdfDoc,
               cachedFonts,
@@ -339,17 +348,39 @@ const renderPdf = async (
     );
 
     newPages.forEach((p) => newDoc.addPage(p));
-    updateProgress(i + 1, rows.length, rows[i]);
+    params.updateProgressFunc(i + 1, rows.length, rowData);
 
-    if (!combinePdf) {
+    if (!params.combinePdf) {
       const pdfBytes = await newDoc.save();
-      const outputs = output.split('.');
+      const fileDir = path.dirname(params.output);
+      const fileEx = path.extname(params.output);
 
-      const baseName = outputs.slice(0, outputs.length - 1).join('.');
-      const fileEx = outputs[outputs.length - 1];
-      const outputName = `${baseName}-${i + 1}.${fileEx}`;
+      // Render filename
+      let filename = '';
+      if (params.filenameTemplate) {
+        const searchValue = /\[\[(.*?)\]\]/g;
+        const replaceValue = (_a: string, b: string) =>
+          rowData[JSON.parse(b).id] || '';
 
-      await saveFile(outputName, pdfBytes, rows[i]);
+        filename = params.filenameTemplate
+          .replace(searchValue, replaceValue)
+          .trim();
+      }
+
+      if (filename === '') {
+        const basename = path.basename(params.output);
+        const parts = basename.split('.');
+        const fileBase = parts.slice(0, parts.length - 1).join('.');
+        filename = `${fileBase}_${i + 1}`;
+      }
+
+      filename = unidecode(filename).replace(/[^a-z0-9]/gi, '_');
+      const outputName = `${filename}${fileEx}`;
+      await params.saveFileFunc(
+        path.join(fileDir, outputName),
+        pdfBytes,
+        rowData
+      );
 
       // Reset
       newDoc = await PDFDocument.create();
@@ -360,9 +391,9 @@ const renderPdf = async (
     pdfDoc = await PDFDocument.load(pdfBuff);
   }
 
-  if (combinePdf) {
+  if (params.combinePdf) {
     const pdfBytes = await newDoc.save();
-    await saveFile(output, pdfBytes);
+    await params.saveFileFunc(params.output, pdfBytes);
     return 1;
   }
 
