@@ -29,12 +29,25 @@ import crypto from 'crypto';
 import glob from 'glob';
 import nodeurl from 'url';
 import { promisify } from 'util';
-import { CheckStatus } from 'electron-gumroad-license';
+import { CheckStatus, createLicenseManager } from 'electron-gumroad-license';
 
 import MenuBuilder from './menu';
 import renderPdf, { loadForm, RenderPdfState, RowMap } from './render';
 import { SmtpConfigType } from './email';
-import { getRowsLimit } from './components/utils/license';
+
+const licenseManager = createLicenseManager('sHNrv');
+
+const getRowsLimit = async () => {
+  try {
+    const { status } = await licenseManager.checkCurrentLicense();
+    if (status === CheckStatus.ValidLicense) {
+      return 100_000;
+    }
+    return 10;
+  } catch (e) {
+    return 10;
+  }
+};
 
 const Store = require('electron-store');
 const nodemailer = require('nodemailer');
@@ -653,6 +666,10 @@ ipcMain.handle(
 ipcMain.handle('check-license', async () => {
   const { status } = await licenseManager.checkCurrentLicense();
   return status === CheckStatus.ValidLicense;
+});
+
+ipcMain.handle('get-rows-limit', async () => {
+  return getRowsLimit();
 });
 
 ipcMain.handle('add-license', async (_event, license: string) => {

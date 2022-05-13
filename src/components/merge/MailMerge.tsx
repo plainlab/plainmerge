@@ -6,7 +6,7 @@ import Tags from '@yaireo/tagify/dist/react.tagify';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { DataHeader, RenderPdfState } from '../pdf/PdfEditor';
-import { readExcelMeta } from '../utils/excel';
+import readExcelMeta from '../utils/excel';
 import { SmtpConfigKey, SmtpConfigType } from '../email/Config';
 
 type MailMergeProps = {
@@ -31,6 +31,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
   const [smtpValid, setSmtpValid] = useState(false);
   const [tab, setTab] = useState('local');
   const [filename, setFilename] = useState('');
+  const [rowsLimit, setRowsLimit] = useState(10);
 
   const tagSettings = {
     pattern: /@/,
@@ -43,7 +44,10 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
 
   const loadConfig = async (fp: string) => {
     const pdfConf: RenderPdfState = await ipcRenderer.invoke('load-config', fp);
-    const { firstRow, rowCount } = await readExcelMeta(pdfConf.excelFile);
+    const { firstRow, rowCount } = await readExcelMeta(
+      pdfConf.excelFile,
+      rowsLimit
+    );
     setHeaders(firstRow);
     setRowsCount(rowCount);
     setPdfConfig(pdfConf);
@@ -113,6 +117,11 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
       setFileProgress(p.page);
       setRowsCount(p.total);
     });
+
+    ipcRenderer
+      .invoke('get-rows-limit')
+      .then((l) => setRowsLimit(l))
+      .catch(() => {});
   }, []);
 
   return (
