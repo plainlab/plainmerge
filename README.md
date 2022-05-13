@@ -23,7 +23,7 @@ You got 100 different PDFs for each employee now.
 - [x] Drag & drop fields to customize PDF template
 - [x] Support native PDF forms
 - [x] Support multiple-pages PDFs
-- [x] Support rendering QR code
+- [x] Support rendering QR code using column data
 - [x] Support `.xlsx`, `.xls` and `.ods` Excel files
 - [x] Send out emails with PDF attachments
 - [x] Cross-platform: macOS, Windows, Linux
@@ -35,7 +35,7 @@ You got 100 different PDFs for each employee now.
 
 ## Try
 
-Download page: https://github.com/plainlab/plainmerge/releases
+Download page: https://github.com/plainlab/plainmerge/releases/latest
 
 - macOS: Get `.dmg` file, open it and drag the app into Applications folder, for Apple
   Silicon mac: get `arm64.dmg` file instead.
