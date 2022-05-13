@@ -12295,6 +12295,11 @@ unicode-property-aliases-ecmascript@^1.0.4:
   resolved "https://registry.npmjs.org/unicode-property-aliases-ecmascript/-/unicode-property-aliases-ecmascript-1.1.0.tgz"
   integrity sha512-PqSoPh/pWetQ2phoj5RLiaqIk4kCNwoV3CI+LfGmWLKI3rE3kl1h59XpX2BjgDrmbxD9ARtQobPGU1SguCYuQg==
 
+unidecode-plus@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/unidecode-plus/-/unidecode-plus-1.0.4.tgz#8f65fd399c87e7165f11fb70f7a2e7e0268e5f22"
+  integrity sha512-KG6C6EFzic7ViDmuI2Z0R7e6fnALtTWUkTH5QrL0Pl9EGRWwwwGmskXaItkerfl5CD5H9p9M/kbaMxX7TJRuOQ==
+
 union-value@^1.0.0:
   version "1.0.1"
   resolved "https://registry.npmjs.org/union-value/-/union-value-1.0.1.tgz"

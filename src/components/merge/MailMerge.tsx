@@ -30,7 +30,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
   const [outputPdf, setOutputPdf] = useState('');
   const [smtpValid, setSmtpValid] = useState(false);
   const [tab, setTab] = useState('local');
-  const [filenameCol, setFilenameCol] = useState(-1);
+  const [filename, setFilename] = useState('');
 
   const tagSettings = {
     pattern: /@/,
@@ -66,6 +66,10 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
     setBody(e.detail.value);
   };
 
+  const handleChangeFilename = (e: any) => {
+    setFilename(e.detail.value);
+  };
+
   const handleChooseFile = () => {
     const name = 'PDF file';
     const extensions = ['pdf'];
@@ -77,7 +81,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
 
   const handleSendEmail = async () => {
     setSending(true);
-    const conf = { ...pdfConfig, filenameCol };
+    const conf = { ...pdfConfig, filename };
     await ipcRenderer.invoke(
       'send-email',
       fromEmail,
@@ -91,7 +95,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
 
   const handleSavePdf = async () => {
     setSaving(true);
-    const conf = { ...pdfConfig, combinePdf, outputPdf, filenameCol };
+    const conf = { ...pdfConfig, combinePdf, outputPdf, filename };
     await ipcRenderer.invoke('save-pdf', conf);
     setSaving(false);
   };
@@ -193,23 +197,26 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
           </section>
 
           {!combinePdf && (
-            <section className="flex items-center space-x-4">
-              <p>Filename column:</p>
-
-              <select
-                onChange={(e) => setFilenameCol(parseInt(e.target.value, 10))}
-                value={filenameCol}
-              >
-                <option key={-1} value={-1}>
-                  Auto increment
-                </option>
-                {headers.map((h) => (
-                  <option key={h.index} value={h.index}>
-                    {h.label}
-                  </option>
-                ))}
-              </select>
-            </section>
+            <div className="flex flex-col space-y-2">
+              <section className="flex items-center justify-between space-y-2">
+                <p className="font-medium">Filename:</p>
+                <small className="text-xs text-right opacity-70">
+                  Type @ to insert column values into the filename
+                </small>
+              </section>
+              <Tags
+                placeholder="Filename"
+                InputMode="textarea"
+                onChange={handleChangeFilename}
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                settings={tagSettings}
+                whitelist={headers.map(({ index, label }) => ({
+                  id: index,
+                  value: label,
+                }))}
+              />
+            </div>
           )}
         </section>
 
@@ -335,25 +342,21 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
             <section className="flex items-center justify-between space-y-2">
               <p className="font-medium">Filename:</p>
               <small className="text-xs text-right opacity-70">
-                Choose a column that will be used as filename for the PDF
+                Type @ to insert column values into the filename
               </small>
             </section>
-            <section className="flex items-center space-x-4">
-              <select
-                className="w-full"
-                onChange={(e) => setFilenameCol(parseInt(e.target.value, 10))}
-                value={filenameCol}
-              >
-                <option key={-1} value={-1}>
-                  Auto increment
-                </option>
-                {headers.map((h) => (
-                  <option key={h.index} value={h.index}>
-                    {h.label}
-                  </option>
-                ))}
-              </select>
-            </section>
+            <Tags
+              placeholder="Filename"
+              InputMode="textarea"
+              onChange={handleChangeFilename}
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              settings={tagSettings}
+              whitelist={headers.map(({ index, label }) => ({
+                id: index,
+                value: label,
+              }))}
+            />
           </div>
         </section>
 

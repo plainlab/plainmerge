@@ -22,6 +22,7 @@ import fs from 'fs';
 import { promisify } from 'util';
 import XLSX from 'xlsx';
 import QRCode from 'qrcode';
+import unidecode from 'unidecode-plus';
 
 const readFile = promisify(fs.readFile);
 
@@ -41,7 +42,7 @@ export interface RenderPdfState {
   outputPdf: string;
   canvasData?: CanvasMap;
   formData?: FormMap;
-  filenameCol?: number;
+  filename?: string;
 }
 
 export type RowMap = Record<number, string>;
@@ -304,7 +305,7 @@ interface RenderPDFParams {
   updateProgressFunc: (page: number, total: number, rowData?: RowMap) => void;
   canvasData?: CanvasMap;
   formData?: FormMap;
-  filenameCol?: number;
+  filenameTemplate?: string;
 }
 
 const renderPdf = async (params: RenderPDFParams) => {
@@ -315,6 +316,8 @@ const renderPdf = async (params: RenderPDFParams) => {
 
   const rows: RowMap[] = readFirstSheet(params.excelFile, params.rowsLimit);
   for (let i = 0; i < rows.length; i += 1) {
+    const rowData = rows[i];
+
     // Step 1: Render pages with form
     renderForm(rows[i], params.formData, pdfDoc.getForm());
 
@@ -326,7 +329,7 @@ const renderPdf = async (params: RenderPDFParams) => {
           if (canvasData[pageIndex + 1]) {
             const page = pdfDoc.getPage(pageIndex);
             await renderPage(
-              rows[i],
+              rowData,
               page,
               pdfDoc,
               cachedFonts,
@@ -344,7 +347,7 @@ const renderPdf = async (params: RenderPDFParams) => {
     );
 
     newPages.forEach((p) => newDoc.addPage(p));
-    params.updateProgressFunc(i + 1, rows.length, rows[i]);
+    params.updateProgressFunc(i + 1, rows.length, rowData);
 
     if (!params.combinePdf) {
       const pdfBytes = await newDoc.save();
@@ -353,16 +356,24 @@ const renderPdf = async (params: RenderPDFParams) => {
       const baseName = outputs.slice(0, outputs.length - 1).join('.');
       const fileEx = outputs[outputs.length - 1];
 
+      // Render filename
       let filename = '';
-      if (params.filenameCol && params.filenameCol > -1) {
-        filename = rows[i][params.filenameCol];
+      if (params.filenameTemplate) {
+        const searchValue = /\[\[(.*?)\]\]/g;
+        const replaceValue = (_a: string, b: string) =>
+          rowData[JSON.parse(b).id] || '';
+
+        filename = params.filenameTemplate
+          .replace(searchValue, replaceValue)
+          .trim();
       }
 
       if (filename === '') {
-        filename = `${baseName}-${i + 1}`;
+        filename = `${i + 1}`;
       }
 
-      const outputName = `${filename}.${fileEx}`;
+      filename = unidecode(filename).replace(/[^a-z0-9]/gi, '_');
+      const outputName = `${baseName}_${filename}.${fileEx}`;
       await params.saveFileFunc(outputName, pdfBytes, rows[i]);
 
       // Reset

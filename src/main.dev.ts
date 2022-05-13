@@ -230,7 +230,7 @@ const savePdf = async (params: RenderPdfState) => {
         mailMergeWindow?.webContents.send('save-progress', { page, total }),
       canvasData: params.canvasData,
       formData: params.formData,
-      filenameCol: params.filenameCol,
+      filenameTemplate: params.filename,
     });
 
     if (created > 0) {
@@ -359,7 +359,7 @@ const sendMailFunc = (
   emailIndex: number,
   subjectTemplate: string,
   bodyTemplate: string
-) => async (fileName: string, buffer: Uint8Array, rowData?: RowMap) => {
+) => async (filename: string, buffer: Uint8Array, rowData?: RowMap) => {
   const config = store.get('smtp-config');
 
   const transporter = nodemailer.createTransport({
@@ -387,7 +387,7 @@ const sendMailFunc = (
     html: text,
     attachments: [
       {
-        filename: path.basename(fileName),
+        filename: path.basename(filename),
         content: buffer,
       },
     ],
@@ -436,7 +436,7 @@ const sendPdfMail = async (
       updateProgressFunc: emailProgressFunc(emailIndex),
       canvasData: params.canvasData,
       formData: params.formData,
-      filenameCol: params.filenameCol,
+      filenameTemplate: params.filename,
     });
 
     if (created > 0) {

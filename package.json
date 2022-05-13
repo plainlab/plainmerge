@@ -277,6 +277,7 @@
     "react-sizeme": "^3.0.1",
     "regenerator-runtime": "^0.13.5",
     "source-map-support": "^0.5.19",
+    "unidecode-plus": "^1.0.4",
     "xlsx": "^0.17.0"
   },
   "devEngines": {
