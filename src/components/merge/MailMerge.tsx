@@ -6,7 +6,7 @@ import Tags from '@yaireo/tagify/dist/react.tagify';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { DataHeader, RenderPdfState } from '../pdf/PdfEditor';
-import { readExcelMeta } from '../utils/excel';
+import readExcelMeta from '../utils/excel';
 import { SmtpConfigKey, SmtpConfigType } from '../email/Config';
 
 type MailMergeProps = {
@@ -41,9 +41,12 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
     },
   };
 
-  const loadConfig = async (fp: string) => {
+  const loadConfig = async (fp: string, rowsLimit: number) => {
     const pdfConf: RenderPdfState = await ipcRenderer.invoke('load-config', fp);
-    const { firstRow, rowCount } = await readExcelMeta(pdfConf.excelFile);
+    const { firstRow, rowCount } = await readExcelMeta(
+      pdfConf.excelFile,
+      rowsLimit
+    );
     setHeaders(firstRow);
     setRowsCount(rowCount);
     setPdfConfig(pdfConf);
@@ -101,7 +104,13 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
   };
 
   useEffect(() => {
-    loadConfig(configPath).catch((e) => alert(e.message));
+    ipcRenderer
+      .invoke('get-rows-limit')
+      .then((limit) =>
+        // eslint-disable-next-line promise/no-nesting
+        loadConfig(configPath, limit).catch((e) => alert(e.message))
+      )
+      .catch(() => {});
 
     ipcRenderer.on('email-progress', (_event, p) => {
       setEmailProgress(p.page);

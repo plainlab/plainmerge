@@ -1,13 +1,6 @@
 import XLSX from 'xlsx';
 
-export const getRowsLimit = () => {
-  if (process.env.PAID) {
-    return 100_000;
-  }
-  return 10;
-};
-
-export const readExcelMeta = async (fp: string) => {
+const readExcelMeta = async (fp: string, rowsLimit: number) => {
   // Read headers
   const workbook = XLSX.readFile(fp, { sheetRows: 1 });
   const sheetsList = workbook.SheetNames;
@@ -23,7 +16,7 @@ export const readExcelMeta = async (fp: string) => {
     label: label as string,
   }));
 
-  let rowCount = getRowsLimit();
+  let rowCount = rowsLimit;
   if (firstSheet['!fullref']) {
     const range = XLSX.utils.decode_range(firstSheet['!fullref']);
     const realRows = range.e.r - range.s.r;
@@ -32,3 +25,5 @@ export const readExcelMeta = async (fp: string) => {
 
   return { firstRow, rowCount };
 };
+
+export default readExcelMeta;
