@@ -436,6 +436,7 @@ const sendPdfMail = async (
       updateProgressFunc: emailProgressFunc(emailIndex),
       canvasData: params.canvasData,
       formData: params.formData,
+      filenameCol: params.filenameCol,
     });
 
     if (created > 0) {
