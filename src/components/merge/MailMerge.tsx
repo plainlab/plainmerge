@@ -30,7 +30,7 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
   const [outputPdf, setOutputPdf] = useState('');
   const [smtpValid, setSmtpValid] = useState(false);
   const [tab, setTab] = useState('local');
-  const [filename, setFilename] = useState(0);
+  const [filenameCol, setFilenameCol] = useState(-1);
 
   const tagSettings = {
     pattern: /@/,
@@ -77,20 +77,21 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
 
   const handleSendEmail = async () => {
     setSending(true);
+    const conf = { ...pdfConfig, filenameCol };
     await ipcRenderer.invoke(
       'send-email',
       fromEmail,
       emailIndex,
       subject,
       body,
-      pdfConfig
+      conf
     );
     setSending(false);
   };
 
   const handleSavePdf = async () => {
     setSaving(true);
-    const conf = { ...pdfConfig, combinePdf, outputPdf };
+    const conf = { ...pdfConfig, combinePdf, outputPdf, filenameCol };
     await ipcRenderer.invoke('save-pdf', conf);
     setSaving(false);
   };
@@ -196,9 +197,12 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
               <p>Filename column:</p>
 
               <select
-                onChange={(e) => setFilename(parseInt(e.target.value, 10))}
-                value={filename}
+                onChange={(e) => setFilenameCol(parseInt(e.target.value, 10))}
+                value={filenameCol}
               >
+                <option key={-1} value={-1}>
+                  Auto increment
+                </option>
                 {headers.map((h) => (
                   <option key={h.index} value={h.index}>
                     {h.label}
@@ -337,9 +341,12 @@ const MailMerge = ({ configPath }: MailMergeProps) => {
             <section className="flex items-center space-x-4">
               <select
                 className="w-full"
-                onChange={(e) => setFilename(parseInt(e.target.value, 10))}
-                value={filename}
+                onChange={(e) => setFilenameCol(parseInt(e.target.value, 10))}
+                value={filenameCol}
               >
+                <option key={-1} value={-1}>
+                  Auto increment
+                </option>
                 {headers.map((h) => (
                   <option key={h.index} value={h.index}>
                     {h.label}

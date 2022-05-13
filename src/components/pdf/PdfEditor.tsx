@@ -40,6 +40,7 @@ export interface RenderPdfState {
   canvasData?: Record<number, CanvasObjects>;
   formData?: Record<string, number>;
   configPath?: string;
+  filenameCol?: number;
 }
 interface FieldType {
   type: string;
