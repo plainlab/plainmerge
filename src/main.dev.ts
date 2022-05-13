@@ -43,9 +43,9 @@ const getRowsLimit = async () => {
     if (status === CheckStatus.ValidLicense) {
       return 100_000;
     }
-    return 10;
+    return 5;
   } catch (e) {
-    return 10;
+    return 5;
   }
 };
 

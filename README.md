@@ -48,7 +48,8 @@ We believe in a transparent and fair world, so we open-source the app and
 you get a trial version for your personal use, but if you find the app helpful,
 please make a purchase.
 
-Purchase page: https://gum.co/plainmerge (accept Debit/Credit cards and PayPal)
+- Purchase page: https://gum.co/plainmerge (accept Debit/Credit cards and PayPal).
+- After purchasing, you will get a license key from Gumroad. Use that key to register the app.
 
 ---
 

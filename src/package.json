@@ -1,7 +1,7 @@
 {
   "name": "plainmerge",
   "productName": "PlainMerge",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Offline PDF mail merger",
   "main": "./main.prod.js",
   "author": {

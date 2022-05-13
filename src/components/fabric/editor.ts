@@ -23,12 +23,23 @@ const TextOptions: ITextboxOptions = {
 };
 
 const props = [
+  'type',
+  'left',
+  'top',
+  'fontSize',
+  'fontFamily',
+  'fill',
+  'width',
   'lockScalingY',
   'lockSkewingX',
   'lockSkewingY',
   'lockRotation',
   'lockScalingFlip',
   'lockUniScaling',
+  'editable',
+  'originX',
+  'originY',
+  'padding',
 ];
 
 export interface Fieldbox extends Textbox {

@@ -572,9 +572,9 @@ const PdfEditor = () => {
                 }
                 tabIndex={0}
               />
-              {showPicker ? (
-                <div className="relative">
-                  <div className="absolute z-10">
+              <div className="relative">
+                {showPicker && (
+                  <div className="absolute top-0 z-50 right-14">
                     <div
                       role="button"
                       aria-labelledby="cover"
@@ -589,8 +589,8 @@ const PdfEditor = () => {
                       onChangeComplete={(c) => setFill(c.hex)}
                     />
                   </div>
-                </div>
-              ) : null}
+                )}
+              </div>
               <button
                 type="button"
                 className="btn-link"
