@@ -24,10 +24,10 @@ import {
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { FileFilter, IpcMainInvokeEvent } from 'electron/main';
-import fs from 'fs';
 import crypto from 'crypto';
 import glob from 'glob';
 import nodeurl from 'url';
+import fs from 'fs';
 import { promisify } from 'util';
 import { CheckStatus, createLicenseManager } from 'electron-gumroad-license';
 
@@ -50,12 +50,10 @@ const getRowsLimit = async () => {
 };
 
 const Store = require('electron-store');
-const nodemailer = require('nodemailer');
 
 const store = new Store();
 
-const writeFile = promisify(fs.writeFile);
-const readFile = promisify(fs.readFile);
+const nodemailer = require('nodemailer');
 
 const configSuffix = 'merge.json';
 
@@ -182,14 +180,14 @@ const getPathHash = (filename: string) => {
 
 const saveConfig = async (params: RenderPdfState) => {
   const p = getPathHash(params.pdfFile);
-  await writeFile(p, JSON.stringify(params), {
+  await promisify(fs.writeFile)(p, JSON.stringify(params), {
     encoding: 'utf8',
   });
   return p;
 };
 
 const loadConfig = async (fp: string) => {
-  const data = await readFile(fp, { encoding: 'utf8' });
+  const data = await promisify(fs.readFile)(fp, { encoding: 'utf8' });
   const conf = JSON.parse(data);
   conf.configPath = fp;
   return conf;
@@ -511,6 +509,13 @@ const sendPdfMail = async (
   }
 };
 
+const getFontsFolder = async () => {
+  const appFolder = app.getPath('userData');
+  const fontFolder = path.join(appFolder, 'fonts');
+  await promisify(fs.mkdir)(fontFolder, { recursive: true });
+  return fontFolder;
+};
+
 /**
  * Handlers events from React
  */
@@ -679,6 +684,31 @@ ipcMain.handle('add-license', async (_event, license: string) => {
 
 ipcMain.handle('buy-now', async () => {
   createBuyNowWindow();
+});
+
+ipcMain.handle('add-font', async (_event, fp: string) => {
+  const fontsFolder = await getFontsFolder();
+  const dest = path.join(fontsFolder, path.basename(fp));
+  await promisify(fs.copyFile)(fp, dest);
+});
+
+ipcMain.handle('load-fonts', async () => {
+  const fontsFolder = await getFontsFolder();
+  const pattern = path.join(fontsFolder, '*.+(ttf|woff|woff2|otf)');
+  const list = await promisify(glob)(pattern);
+
+  return list.map((fp: string) => ({
+    path: fp,
+    name: path.basename(fp),
+  }));
+});
+
+ipcMain.handle('delete-font', async (_event, fp: string) => {
+  const fontsFolder = await getFontsFolder();
+  if (!fp.startsWith(fontsFolder)) {
+    return;
+  }
+  await promisify(fs.unlink)(fp);
 });
 
 /**
