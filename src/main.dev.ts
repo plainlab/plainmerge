@@ -233,7 +233,7 @@ const savePdf = async (params: RenderPdfState) => {
       excelFile: params.excelFile,
       rowsLimit,
       combinePdf: params.combinePdf,
-      saveFileFunc: writeFile,
+      saveFileFunc: promisify(fs.writeFile),
       updateProgressFunc: (page, total) =>
         mailMergeWindow?.webContents.send('save-progress', { page, total }),
       canvasData: params.canvasData,
@@ -305,7 +305,7 @@ const previewPdf = async (params: RenderPdfState) => {
       excelFile: params.excelFile,
       rowsLimit: 1,
       combinePdf: true,
-      saveFileFunc: writeFile,
+      saveFileFunc: promisify(fs.writeFile),
       updateProgressFunc: () => {},
       canvasData: params.canvasData,
       formData: params.formData || {},
@@ -540,7 +540,7 @@ ipcMain.handle(
       if (type === 'path') {
         content = fpath;
       } else {
-        content = await readFile(fpath);
+        content = await promisify(fs.readFile)(fpath);
       }
     }
     return content;
@@ -556,7 +556,7 @@ ipcMain.handle(
 
     if (!file || !file.filePath) return;
 
-    await writeFile(file.filePath, content, {
+    await promisify(fs.writeFile)(file.filePath, content, {
       encoding,
     });
   }

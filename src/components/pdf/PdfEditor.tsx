@@ -19,6 +19,7 @@ import { IconName } from '@fortawesome/fontawesome-svg-core';
 import { FabricJSCanvas, useFabricJSEditor } from '../fabric/Canvas';
 import readExcelMeta from '../utils/excel';
 import { Fieldbox } from '../fabric/editor';
+import { FontItem } from '../config/Fonts';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 export interface DataHeader {
@@ -62,6 +63,7 @@ const PdfEditor = () => {
   const [fontFamily, setFontFamily] = useState(
     StandardFonts.Helvetica as string
   );
+  const [customFonts, setCustomFonts] = useState<FontItem[]>([]);
   const [fontSize, setFontSize] = useState(16);
   const [fill, setFill] = useState('#000');
   const [showPicker, setShowPicker] = useState(false);
@@ -380,6 +382,11 @@ const PdfEditor = () => {
       .invoke('get-rows-limit')
       .then((l) => setRowsLimit(l))
       .catch(() => {});
+
+    ipcRenderer
+      .invoke('load-fonts')
+      .then((fts) => setCustomFonts(fts))
+      .catch(() => {});
   }, []);
 
   return (
@@ -514,6 +521,15 @@ const PdfEditor = () => {
                 value={fontFamily}
                 disabled={!selectedObject || renderType !== 'text'}
               >
+                {customFonts.length &&
+                  customFonts.map(({ path, name }) => (
+                    <option value={path} key={path}>
+                      {name}
+                    </option>
+                  ))}
+
+                {customFonts.length && <option disabled>---</option>}
+
                 {fonts.map(({ label, value }) => (
                   <option value={value} key={value}>
                     {label}

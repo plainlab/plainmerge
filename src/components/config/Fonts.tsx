@@ -2,7 +2,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ipcRenderer } from 'electron';
 import React, { useEffect, useState } from 'react';
 
-interface FontItem {
+export interface FontItem {
   name: string;
   path: string;
 }
