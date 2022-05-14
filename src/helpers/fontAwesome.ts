@@ -7,13 +7,14 @@ import {
   faFolder,
   faAlignLeft,
   faAlignRight,
-  faCog,
   faEllipsisV,
   faExternalLinkAlt,
   faHistory,
   faPlus,
   faSearch,
   faTimesCircle,
+  faFont,
+  faMailBulk,
 } from '@fortawesome/free-solid-svg-icons';
 
 library.add(
@@ -29,7 +30,8 @@ library.add(
   faAlignCenter,
   faAlignLeft,
   faSearch,
-  faCog,
   faExternalLinkAlt,
-  faTimesCircle
+  faTimesCircle,
+  faFont,
+  faMailBulk
 );

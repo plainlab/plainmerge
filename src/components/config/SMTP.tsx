@@ -24,7 +24,7 @@ const defaultSmtpConfig = {
 
 export const SmtpConfigKey = 'smtp-config';
 
-const Config = () => {
+const SmtpConfig = () => {
   const [validating, setValidating] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [config, setConfig] = useState<SmtpConfigType>(defaultSmtpConfig);
@@ -117,7 +117,7 @@ const Config = () => {
       <section className="flex flex-col items-start justify-center space-y-8">
         <h2 className="space-x-1 leading-8">
           <span className="text-lg font-bold">SMTP configuration</span>
-          <span className="text-md">(For sending out emails)</span>
+          <span className="opacity-50 text-md">(For sending out emails)</span>
         </h2>
 
         <section className="flex flex-col items-start justify-center space-y-4">
@@ -226,4 +226,4 @@ const Config = () => {
   );
 };
 
-export default Config;
+export default SmtpConfig;

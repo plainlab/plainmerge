@@ -18,12 +18,14 @@ import {
   PDFOptionList,
   PDFRadioGroup,
 } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
 import fs from 'fs';
 import { promisify } from 'util';
 import XLSX from 'xlsx';
 import QRCode from 'qrcode';
 import unidecode from 'unidecode-plus';
 import path from 'path';
+import { app } from 'electron';
 
 const readFile = promisify(fs.readFile);
 
@@ -67,9 +69,17 @@ const getFont = async (
   pdfDoc: PDFDocument,
   cachedFonts: FontMap
 ) => {
+  pdfDoc.registerFontkit(fontkit);
+  const appFolder = app.getPath('userData');
+
   const key = font || StandardFonts.Helvetica;
   if (!cachedFonts[key]) {
-    cachedFonts[key] = await pdfDoc.embedFont(key);
+    if (font?.startsWith(appFolder)) {
+      const data = await promisify(fs.readFile)(font);
+      cachedFonts[key] = await pdfDoc.embedFont(data);
+    } else {
+      cachedFonts[key] = await pdfDoc.embedFont(key);
+    }
   }
   return cachedFonts[key];
 };
