@@ -31,7 +31,7 @@ const MergeList = () => {
       <h2 className="flex items-center justify-between leading-8">
         <span className="text-lg font-bold">Merge history</span>
       </h2>
-      <ul className="flex flex-col items-center justify-start flex-1 space-y-8 truncate">
+      <ul className="flex flex-col items-center justify-start flex-1 space-y-8">
         {merges.map((state) => (
           <li
             className="flex items-center justify-start w-full p-4 space-x-4 transition-shadow bg-gray-100 border shadow-sm hover:shadow-md rounded-xl"
@@ -67,9 +67,9 @@ const MergeList = () => {
           </li>
         ))}
 
-        {merges.length === 0 ? (
+        {merges.length === 0 && (
           <p>Recent files will be saved here when you Preview or Merge.</p>
-        ) : null}
+        )}
       </ul>
     </section>
   );
