@@ -27,46 +27,51 @@ const MergeList = () => {
   }, []);
 
   return (
-    <ul className="flex flex-col items-center justify-start flex-1 p-8 space-y-8 truncate bg-gray-50">
-      {merges.map((state) => (
-        <li
-          className="flex items-center justify-start w-full p-4 space-x-4 transition-shadow bg-gray-100 border shadow-sm hover:shadow-md rounded-xl"
-          key={state.pdfFile}
-        >
-          <section className="flex items-center justify-center flex-1 space-x-2 truncate">
-            <NavLink
-              to={{ pathname: '/new', state }}
-              className="flex items-center justify-center flex-shrink-0 w-8"
-            >
-              <FontAwesomeIcon
-                icon={['far', 'file-pdf']}
-                className="flex-1 w-5 h-5 text-red-400 hover:opacity-80"
-              />
-            </NavLink>
-
-            <section className="flex-1 block space-y-2 truncate">
+    <section className="h-full p-8 space-y-8 overflow-scroll bg-gray-50">
+      <h2 className="flex items-center justify-between leading-8">
+        <span className="text-lg font-bold">Merge history</span>
+      </h2>
+      <ul className="flex flex-col items-center justify-start flex-1 space-y-8 truncate">
+        {merges.map((state) => (
+          <li
+            className="flex items-center justify-start w-full p-4 space-x-4 transition-shadow bg-gray-100 border shadow-sm hover:shadow-md rounded-xl"
+            key={state.pdfFile}
+          >
+            <section className="flex items-center justify-center flex-1 space-x-2 truncate">
               <NavLink
                 to={{ pathname: '/new', state }}
-                className="text-lg hover:opacity-80"
+                className="flex items-center justify-center flex-shrink-0 w-8"
               >
-                {state.pdfFile}
+                <FontAwesomeIcon
+                  icon={['far', 'file-pdf']}
+                  className="flex-1 w-5 h-5 text-red-400 hover:opacity-80"
+                />
               </NavLink>
-            </section>
-          </section>
-          <section className="flex items-center justify-center">
-            <FontAwesomeIcon
-              icon={['far', 'trash-alt']}
-              onClick={() => handleRemove(state.configPath)}
-              className="w-3 h-3 text-gray-400 cursor-pointer hover:opacity-80"
-            />
-          </section>
-        </li>
-      ))}
 
-      {merges.length === 0 ? (
-        <p>Recent files will be saved here when you Preview or Merge.</p>
-      ) : null}
-    </ul>
+              <section className="flex-1 block space-y-2 truncate">
+                <NavLink
+                  to={{ pathname: '/new', state }}
+                  className="text-lg hover:opacity-80"
+                >
+                  {state.pdfFile}
+                </NavLink>
+              </section>
+            </section>
+            <section className="flex items-center justify-center">
+              <FontAwesomeIcon
+                icon={['far', 'trash-alt']}
+                onClick={() => handleRemove(state.configPath)}
+                className="w-3 h-3 text-gray-400 cursor-pointer hover:opacity-80"
+              />
+            </section>
+          </li>
+        ))}
+
+        {merges.length === 0 ? (
+          <p>Recent files will be saved here when you Preview or Merge.</p>
+        ) : null}
+      </ul>
+    </section>
   );
 };
 

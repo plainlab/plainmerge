@@ -24,7 +24,7 @@ const defaultSmtpConfig = {
 
 export const SmtpConfigKey = 'smtp-config';
 
-const Config = () => {
+const SmtpConfig = () => {
   const [validating, setValidating] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [config, setConfig] = useState<SmtpConfigType>(defaultSmtpConfig);
@@ -226,4 +226,4 @@ const Config = () => {
   );
 };
 
-export default Config;
+export default SmtpConfig;

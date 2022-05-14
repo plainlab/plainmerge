@@ -7,7 +7,7 @@ import Tags from '@yaireo/tagify/dist/react.tagify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { DataHeader, RenderPdfState } from '../pdf/PdfEditor';
 import readExcelMeta from '../utils/excel';
-import { SmtpConfigKey, SmtpConfigType } from '../email/Config';
+import { SmtpConfigKey, SmtpConfigType } from '../config/SMTP';
 
 type MailMergeProps = {
   configPath: string;

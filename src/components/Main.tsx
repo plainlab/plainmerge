@@ -5,7 +5,8 @@ import { Helmet } from 'react-helmet';
 
 import MergeList from './merge/MergeList';
 import MergeNew from './merge/MergeNew';
-import Config from './email/Config';
+import SmtpConfig from './config/SMTP';
+import FontConfig from './config/Fonts';
 
 const allRoutes = [
   {
@@ -21,10 +22,16 @@ const allRoutes = [
     Component: MergeList,
   },
   {
-    icon: <FontAwesomeIcon icon="cog" />,
-    path: '/config',
-    name: 'Configuration',
-    Component: Config,
+    icon: <FontAwesomeIcon icon="mail-bulk" />,
+    path: '/smtp',
+    name: 'SMTP Configuration',
+    Component: SmtpConfig,
+  },
+  {
+    icon: <FontAwesomeIcon icon="font" />,
+    path: '/fonts',
+    name: 'Font Manager',
+    Component: FontConfig,
   },
 ];
 
