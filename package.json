@@ -254,6 +254,7 @@
     "@fortawesome/free-regular-svg-icons": "^5.15.3",
     "@fortawesome/free-solid-svg-icons": "^5.15.3",
     "@fortawesome/react-fontawesome": "^0.1.14",
+    "@pdf-lib/fontkit": "^1.1.1",
     "@yaireo/tagify": "^4.7.2",
     "caniuse-lite": "^1.0.30001246",
     "electron-debug": "^3.1.0",
