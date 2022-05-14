@@ -9,6 +9,7 @@ export interface FontItem {
 
 const FontConfig = () => {
   const [openingFont, setOpeningFont] = useState(false);
+  const [paid, setPaid] = useState(true);
   const [customFonts, setCustomFonts] = useState<FontItem[]>([]);
 
   const loadCustomFonts = async () => {
@@ -22,8 +23,13 @@ const FontConfig = () => {
       { name: 'Font Files', extensions: ['ttf', 'woff', 'woff2', 'otf'] },
     ];
     const fp = await ipcRenderer.invoke('open-file', filters, 'path');
-    await ipcRenderer.invoke('add-font', fp);
     setOpeningFont(false);
+
+    if (!fp) {
+      return;
+    }
+
+    await ipcRenderer.invoke('add-font', fp);
     await loadCustomFonts();
   };
 
@@ -33,6 +39,13 @@ const FontConfig = () => {
   };
 
   useEffect(() => {
+    ipcRenderer
+      .invoke('check-license')
+      .then((p) => setPaid(p))
+      .catch(() =>
+        alert('Can not validate your license. Please try again later.')
+      );
+
     loadCustomFonts();
   }, []);
 
@@ -44,7 +57,7 @@ const FontConfig = () => {
           className="btn"
           type="button"
           onClick={handleOpenFont}
-          disabled={openingFont}
+          disabled={openingFont || !paid}
         >
           Add font...
         </button>
@@ -72,7 +85,14 @@ const FontConfig = () => {
             </section>
           </li>
         ))}
+
         {!customFonts.length && <p>Your custom fonts be listed here.</p>}
+
+        {!customFonts.length && !paid && (
+          <p className="text-red-500">
+            This feature is for registered users only.
+          </p>
+        )}
       </ul>
     </section>
   );
