@@ -116,7 +116,7 @@ const SmtpConfig = () => {
     <section className="flex flex-col items-start justify-between flex-1 p-8 space-y-8 bg-gray-50">
       <section className="flex flex-col items-start justify-center space-y-8">
         <h2 className="space-x-1 leading-8">
-          <span className="text-lg font-bold">SMTP configuration</span>
+          <span className="text-lg font-bold">SMTP Configuration</span>
           <span className="opacity-50 text-md">(For sending out emails)</span>
         </h2>
 

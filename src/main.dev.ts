@@ -67,7 +67,7 @@ export default class AppUpdater {
 
 let mainWindow: BrowserWindow | null = null;
 let mailMergeWindow: BrowserWindow | null = null;
-let buyNowWindow: BrowserWindow | null = null;
+let registerWindow: BrowserWindow | null = null;
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -324,9 +324,9 @@ const previewPdf = async (params: RenderPdfState) => {
   }
 };
 
-const createBuyNowWindow = () => {
-  if (buyNowWindow == null) {
-    buyNowWindow = new BrowserWindow({
+const createRegisterWindow = () => {
+  if (registerWindow == null) {
+    registerWindow = new BrowserWindow({
       parent: mainWindow || undefined,
       width: windowHeight,
       height: windowHeight,
@@ -338,17 +338,17 @@ const createBuyNowWindow = () => {
       },
     });
   }
-  buyNowWindow.loadURL(`file://${__dirname}/index.html?page=buy`);
+  registerWindow.loadURL(`file://${__dirname}/index.html?page=register`);
 
-  buyNowWindow.webContents.on('did-finish-load', () => {
-    buyNowWindow?.show();
+  registerWindow.webContents.on('did-finish-load', () => {
+    registerWindow?.show();
   });
 
-  buyNowWindow.on('closed', () => {
-    buyNowWindow = null;
+  registerWindow.on('closed', () => {
+    registerWindow = null;
   });
 
-  buyNowWindow.webContents.on('new-window', (event, url) => {
+  registerWindow.webContents.on('new-window', (event, url) => {
     event.preventDefault();
     shell.openExternal(url);
   });
@@ -682,8 +682,8 @@ ipcMain.handle('add-license', async (_event, license: string) => {
   return success;
 });
 
-ipcMain.handle('buy-now', async () => {
-  createBuyNowWindow();
+ipcMain.handle('register-license', async () => {
+  createRegisterWindow();
 });
 
 ipcMain.handle('add-font', async (_event, fp: string) => {

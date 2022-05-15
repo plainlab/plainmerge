@@ -7,7 +7,7 @@ export interface FontItem {
   path: string;
 }
 
-const FontConfig = () => {
+const FontManager = () => {
   const [openingFont, setOpeningFont] = useState(false);
   const [customFonts, setCustomFonts] = useState<FontItem[]>([]);
 
@@ -44,7 +44,7 @@ const FontConfig = () => {
   return (
     <section className="h-full p-8 space-y-8 overflow-scroll bg-gray-50">
       <h2 className="flex items-center justify-between w-full space-x-4 leading-8">
-        <span className="text-lg font-bold">Font manager</span>
+        <span className="text-lg font-bold">Font Manager</span>
         <button
           className="btn"
           type="button"
@@ -84,4 +84,4 @@ const FontConfig = () => {
   );
 };
 
-export default FontConfig;
+export default FontManager;

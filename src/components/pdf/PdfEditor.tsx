@@ -153,8 +153,8 @@ const PdfEditor = () => {
     await ipcRenderer.invoke('mail-merge', getCurrentState());
   };
 
-  const handleBuy = async () => {
-    await ipcRenderer.invoke('buy-now');
+  const handleRegister = async () => {
+    await ipcRenderer.invoke('register-license');
   };
 
   const handlePreview = async () => {
@@ -471,7 +471,7 @@ const PdfEditor = () => {
               <button
                 type="button"
                 className="text-red-500 btn"
-                onClick={handleBuy}
+                onClick={handleRegister}
               >
                 Register
               </button>
