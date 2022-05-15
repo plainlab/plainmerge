@@ -29,7 +29,7 @@ const MergeList = () => {
   return (
     <section className="h-full p-8 space-y-8 overflow-scroll bg-gray-50">
       <h2 className="flex items-center justify-between leading-8">
-        <span className="text-lg font-bold">Merge history</span>
+        <span className="text-lg font-bold">Merge History</span>
       </h2>
       <ul className="flex flex-col items-center justify-start flex-1 space-y-8">
         {merges.map((state) => (

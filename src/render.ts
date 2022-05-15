@@ -70,17 +70,24 @@ const getFont = async (
   cachedFonts: FontMap
 ) => {
   pdfDoc.registerFontkit(fontkit);
-  const appFolder = app.getPath('userData');
 
+  const appFolder = app.getPath('userData');
   const key = font || StandardFonts.Helvetica;
+
   if (!cachedFonts[key]) {
     if (font?.startsWith(appFolder)) {
-      const data = await promisify(fs.readFile)(font);
-      cachedFonts[key] = await pdfDoc.embedFont(data);
+      const exists = await promisify(fs.exists)(font);
+      if (exists) {
+        const data = await promisify(fs.readFile)(font);
+        cachedFonts[key] = await pdfDoc.embedFont(data);
+      } else {
+        cachedFonts[key] = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      }
     } else {
       cachedFonts[key] = await pdfDoc.embedFont(key);
     }
   }
+
   return cachedFonts[key];
 };
 
