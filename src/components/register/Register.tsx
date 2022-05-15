@@ -2,7 +2,7 @@ import { ipcRenderer } from 'electron';
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 
-const BuyNow = () => {
+const Register = () => {
   const [license, setLicense] = useState('');
   const [registering, setRegistering] = useState(false);
 
@@ -69,4 +69,4 @@ const BuyNow = () => {
   );
 };
 
-export default BuyNow;
+export default Register;

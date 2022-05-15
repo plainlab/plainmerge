@@ -5,7 +5,7 @@ import Main from './components/Main';
 import './App.global.css';
 import './helpers/fontAwesome';
 import MailMerge from './components/merge/MailMerge';
-import BuyNow from './components/buy/BuyNow';
+import Register from './components/register/Register';
 
 export default function App() {
   return (
@@ -25,8 +25,8 @@ export default function App() {
               );
             }
 
-            if (so.page === 'buy') {
-              return <BuyNow />;
+            if (so.page === 'register') {
+              return <Register />;
             }
 
             return <Main />;
