@@ -5,6 +5,8 @@
 
 ![PlainMerge](./.erb/assets/plainmerge.png)
 
+_Disclaimer_: This repo contains outdated source code. The releases are always up to date.
+
 ## What is this?
 
 Imagine you want to fill out a PDF form for 100 employees with a specific name and address
@@ -23,8 +25,9 @@ You got 100 different PDFs for each employee now.
 - [x] Drag & drop fields to customize PDF template
 - [x] Support native PDF forms
 - [x] Support multiple-pages PDFs
-- [x] Support rendering QR code
-- [x] Support `.xlsx`, `.xls` and `.ods` Excel files
+- [x] Support rendering QR code using column data
+- [x] Support custom fonts
+- [x] Support `.xlsx`, `.xls` and `.ods` Excel file formats
 - [x] Send out emails with PDF attachments
 - [x] Cross-platform: macOS, Windows, Linux
 - [x] Work offline
@@ -35,7 +38,7 @@ You got 100 different PDFs for each employee now.
 
 ## Try
 
-Download page: https://github.com/plainlab/plainmerge/releases
+Download page: https://github.com/plainlab/plainmerge/releases/latest
 
 - macOS: Get `.dmg` file, open it and drag the app into Applications folder, for Apple
   Silicon mac: get `arm64.dmg` file instead.
@@ -48,7 +51,8 @@ We believe in a transparent and fair world, so we open-source the app and
 you get a trial version for your personal use, but if you find the app helpful,
 please make a purchase.
 
-Purchase page: https://gum.co/plainmerge (accept Debit/Credit cards and PayPal)
+- Purchase page: https://gum.co/plainmerge (accept Debit/Credit cards and PayPal).
+- After purchasing, you will get a license key from Gumroad. Use that key to register the app.
 
 ---
 
