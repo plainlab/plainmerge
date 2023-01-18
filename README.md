@@ -1,7 +1,7 @@
 [![Test](https://github.com/plainlab/plainmerge/actions/workflows/test.yml/badge.svg)](https://github.com/plainlab/plainmerge/actions/workflows/test.yml)
 [![Release](https://img.shields.io/github/v/release/plainlab/plainmerge)](https://github.com/plainlab/plainmerge/releases)
 
-# PlainMerge - A PDF mail merger
+# PlainMerge - A PDF mail merger using Excel files
 
 ![PlainMerge](./.erb/assets/plainmerge.png)
 
@@ -51,18 +51,18 @@ We believe in a transparent and fair world, so we open-source the app and
 you get a trial version for your personal use, but if you find the app helpful,
 please make a purchase.
 
-### Multiple Platforms
+### From Gumroad
 
 - Purchase page: https://gum.co/plainmerge (accept Debit/Credit cards and PayPal).
 - After purchasing, you will get a license key from Gumroad. Use that key to register the app.
 
-One time fee. Multiple platforms: macOS, Windows, Linux
+One-time fee. Multiple platforms: macOS, Windows, Linux.
 
-### Mac Store
+### On Mac App Store
 
 [![appstore](https://user-images.githubusercontent.com/8898656/212871568-bfb5bd39-716d-43a4-b3ed-0f48fbee3f41.svg)](https://apps.apple.com/app/pdf-mail-merger/id1664125232)
 
-One time fee. Only available on macOS.
+One-time fee. For macOS only.
 
 ---
 
