@@ -25,7 +25,7 @@ You got 100 different PDFs for each employee now.
 - [x] Drag & drop fields to customize PDF template
 - [x] Support native PDF forms
 - [x] Support multiple-pages PDFs
-- [x] Support rendering QR code using column data
+- [x] Support rendering QR code / barcode using column data
 - [x] Support custom fonts
 - [x] Support `.xlsx`, `.xls` and `.ods` Excel file formats
 - [x] Send out emails with PDF attachments
