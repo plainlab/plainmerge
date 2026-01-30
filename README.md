@@ -59,4 +59,4 @@ One-time fee. Multiple platforms: macOS, Windows, Linux.
 
 ---
 
-&copy; 2023 Tai Vo
+&copy; 2026 Tai Vo
