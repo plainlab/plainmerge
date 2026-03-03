@@ -56,6 +56,9 @@ please make a purchase.
 
 One-time fee. Multiple platforms: macOS, Windows, Linux.
 
+## Web version
+
+https://mergram.com/
 
 ---
 
